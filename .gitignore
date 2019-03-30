@@ -9,3 +9,8 @@ pom.xml.asc
 /.nrepl-port
 .hgignore
 .hg/
+/.cljs_node_repl
+/.rebel_readline_history
+*~
+*.log
+log
