@@ -9,28 +9,28 @@
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/clojurescript "1.10.520" :scope "provided"]
                  [aysylu/loom "1.0.2"]
-                 [camel-snake-kebab "0.4.0"]
-                 [org.clojure/math.combinatorics "0.1.4"]]
+                 [camel-snake-kebab "0.4.0"]]
 
   :repositories {"github" "https://maven2.github.com"}
 
   :profiles {:dev
              {:dependencies [[lein-doo "0.1.11"]
                              [com.bhauman/figwheel-main "0.2.0"]
-                             [com.bhauman/rebel-readline-cljs "0.1.4"]]
-
+                             [com.bhauman/rebel-readline-cljs "0.1.4"]
+                             [com.taoensso/tufte "2.0.1"]
+                             [org.clojure/math.combinatorics "0.1.4"]]
               :plugins      [[lein-doo "0.1.11"]]
-              
               :global-vars {;; *warn-on-reflection* true
                             ;; *unchecked-math* :warn-on-boxed
                             *assert* true}
-
-              :resource-paths ["test/resources"]
-
-              }
+              :resource-paths ["test/resources"]}
              :bench
              {:main blossom.bench/-main
-              :source-paths ["src" "test"]}}
+              :dependencies [[com.taoensso/tufte "2.0.1"]]
+              :source-paths ["src" "test"]
+              :global-vars {*warn-on-reflection* true
+                            *unchecked-math* :warn-on-boxed
+                            *assert* true}}}
 
   :plugins [[lein-cljsbuild "1.1.5"]]
 
