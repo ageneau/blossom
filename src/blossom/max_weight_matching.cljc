@@ -11,7 +11,7 @@
             [blossom.utils :as utils]
             [clojure.spec.alpha :as s]))
 
-(defprotocol IMaxWeightMatchingImpl
+(defprotocol PMaxWeightMatchingImpl
   (blossom-loop-direction [context b entry-child])
   (act-on-minimum-delta [context delta-type delta-edge delta-blossom])
   (promote-sub-blossoms-to-top-blossoms [context b endstage])
@@ -77,7 +77,7 @@
     [context p v]))
 
 (extend-type blossom.context.Context
-  IMaxWeightMatchingImpl
+  PMaxWeightMatchingImpl
   (entry-child [context b]
     (blossom/in-blossom context
                         (graph/endpoint context
@@ -569,7 +569,7 @@
 
   (scan-neighbors
     [context v]
-    (loop [neighbors (graph/successors* context v)
+    (loop [neighbors (graph/neighbend context v)
            result {:context context
                    :augmented false}]
       (if (or (not (seq neighbors))

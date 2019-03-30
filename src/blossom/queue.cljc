@@ -1,6 +1,6 @@
 (ns blossom.queue)
 
-(defprotocol IQueue
+(defprotocol PQueue
   (queue-push [this coll])
   (queue-peek [this])
   (queue-pop [this])
@@ -8,7 +8,7 @@
   (queue-clear [this]))
 
 (extend-type blossom.context.Context
-  IQueue
+  PQueue
   (queue-push [this coll]
     (update this :queue into coll))
 

@@ -2,7 +2,7 @@
   (:require [blossom.context :as ctx]
             [blossom.graph :as graph]))
 
-(defprotocol IDualProblem
+(defprotocol PDualProblem
   (best-edge-assoc [this b edge])
   (best-edge [this b])
   (best-edge-clear [this b])
@@ -23,7 +23,7 @@
   (allow-edge-clear [this]))
 
 (extend-type blossom.context.Context
-  IDualProblem
+  PDualProblem
   (best-edge-assoc [this b edge]
     (update this :best-edge assoc b edge))
 

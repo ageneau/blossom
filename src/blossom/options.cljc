@@ -1,9 +1,9 @@
 (ns blossom.options)
 
-(defprotocol IOptions
+(defprotocol POptions
   (get-option [this opt]))
 
 (extend-type blossom.context.Context
-  IOptions
+  POptions
   (get-option [this opt]
     (get (:options this) opt)))

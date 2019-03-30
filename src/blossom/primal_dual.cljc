@@ -6,7 +6,7 @@
             [blossom.options :as options]
             [blossom.utils :as utils]))
 
-(defprotocol IPrimalDual
+(defprotocol PPrimalDual
   (compute-delta-1 [context]
     "Minimum value of any vertex dual.")
   (compute-delta-2 [context]
@@ -21,21 +21,21 @@
   (Note that our vertex dual variables, edge slacks and delta's
   are pre-multiplied by two)."))
 
-(defprotocol IPrimalDualImpl
+(defprotocol PPrimalDualImpl
   (get-least-slack-edges [context bv])
   (compute-my-best-edges [context b])
   (update-blossom-dual-with-delta [context delta])
   (update-dual-var-with-delta [context delta]))
 
 (extend-type blossom.context.Context
-  IPrimalDualImpl
+  PPrimalDualImpl
   (get-least-slack-edges
     [context bv]
     (or (dual/blossom-best-edges context bv)
         ;; This subblossom does not have a list of least-slack edges;
         ;; get the information from the vertices.
         (for [v (blossom/blossom-leaves context bv)
-              p (graph/successors* context v)]
+              p (graph/neighbend context v)]
           (quot p 2))))
 
   (compute-my-best-edges
@@ -101,7 +101,7 @@
      context
      (blossom/blossom-range context)))
 
-  IPrimalDual
+  PPrimalDual
   (compute-delta-1
     [context]
     {:delta (reduce min (subvec (:dual-var context) 0 (:nvertex context)))})

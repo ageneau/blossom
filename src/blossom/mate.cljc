@@ -1,11 +1,11 @@
 (ns blossom.mate)
 
-(defprotocol IMate
+(defprotocol PMate
   (mate-assoc [this v1 v2])
   (mate [this v]))
 
 (extend-type blossom.context.Context
-  IMate
+  PMate
   (mate-assoc [this v1 v2]
     (update this :mate assoc v1 v2))
 

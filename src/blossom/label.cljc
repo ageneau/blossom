@@ -6,7 +6,7 @@
 (def T-BLOSSOM 2)
 (def BREADCRUMB 5)
 
-(defprotocol ILabelable
+(defprotocol PLabelable
   (add-label [graph node label]
     "Add a label to a node")
   (label [graph node]
@@ -27,7 +27,7 @@
   (label-end [graph node]))
 
 (extend-type blossom.context.Context
-  ILabelable
+  PLabelable
   (add-label [this node t]
     (update this :label assoc node t))
 

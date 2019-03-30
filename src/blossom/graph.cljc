@@ -11,21 +11,21 @@
 (def no-edge? #(= NO-EDGE %))
 (def some-edge? #(not= NO-EDGE %))
 
-(defprotocol IGraph
-  (edges [this k])
-  (endpoint [this p])
-  (successors* [this v]))
+(defprotocol PGraph
+  (edges [g k])
+  (endpoint [g p])
+  (neighbend [g v]))
 
 (extend-type blossom.context.Context
-  IGraph
-  (edges [this k]
-    (nth (:edges this) k))
+  PGraph
+  (edges [g k]
+    (nth (:edges g) k))
 
-  (endpoint [this p]
-    (nth (:endpoint this) p))
+  (endpoint [g p]
+    (nth (:endpoint g) p))
 
-  (successors* [this v]
-    (nth (:neighbend this) v)))
+  (neighbend [g v]
+    (nth (:neighbend g) v)))
 
 (defn edges-with-weights
   ([g]

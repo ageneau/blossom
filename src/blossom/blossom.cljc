@@ -3,7 +3,7 @@
             [blossom.graph :as graph]
             [blossom.utils :as utils]))
 
-(defprotocol IBlossom
+(defprotocol PBlossom
   (in-blossom-assoc [this v b])
   (in-blossom [this v])
 
@@ -37,7 +37,7 @@
   (vertex-range [this]))
 
 (extend-type blossom.context.Context
-  IBlossom
+  PBlossom
   (in-blossom-assoc [this v b]
     (update this :in-blossom assoc v b))
 
