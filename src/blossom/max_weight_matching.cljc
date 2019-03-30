@@ -516,11 +516,11 @@
 
   (calc-slack
     [context k]
-    (let [kslack (dual/slack context k)]
+    (let [allowed? (dual/allowed-edge? context k)
+          kslack (when-not allowed? (dual/slack context k))]
       {:kslack kslack
        :context (cond-> context
-                  (and (not (dual/allowed-edge? context k))
-                       (<= kslack 0))
+                  (and (not allowed?) (<= kslack 0))
                   ;; edge k has zero slack => it is allowable
                   (dual/allow-edge-assoc k true))}))
 
