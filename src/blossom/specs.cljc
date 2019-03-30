@@ -1,55 +1,53 @@
 (ns blossom.specs
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [blossom.constants :as c]
+            [loom.graph :refer [Graph WeightedGraph]]))
 
-(def NO-NODE -1)
-(def NO-EDGE -1)
+(s/def :graph/vertex nat-int?)
+(s/def :graph/endpoint nat-int?)
 
-(s/def :vertex/vertex nat-int?)
 (s/def :edge/weight (s/or :int int?
                           :number number?))
 
 (s/def :graph/edge-index int?)
-(s/def :graph/edge (s/tuple :vertex/vertex :vertex/vertex :edge/weight))
+(s/def :graph/edge (s/tuple :graph/vertex :graph/vertex :edge/weight))
 (s/def :context/edges (s/coll-of :graph/edge :distinct true))
 
-(s/def :graph/nodeset (s/coll-of :vertex/vertex :distinct true))
-(s/def :graph/adj (s/map-of :vertex/vertex (s/map-of :vertex/vertex :edge/weight)))
-(s/def :graph/graph (s/keys :req-un [:graph/nodeset
-                                     :graph/adj]))
+(s/def :graph/graph (partial satisfies? Graph))
+(s/def :graph/weighted-graph (s/and :graph/graph (partial satisfies? WeightedGraph)))
 
-(s/def :blossom/matching (s/coll-of (s/coll-of :vertex/vertex :count 2 :distinct true) :distinct true))
+(s/def :blossom/matching (s/coll-of (s/coll-of :graph/vertex :count 2 :distinct true) :distinct true))
 
 (s/def :node/label (s/or :unlabeled #{0}
                          :s-blossom #{1}
                          :t-blossom #{2}
                          :breadcrumb #{5}))
 
-(s/def :node/blossom (s/or :vertex :vertex/vertex
-                           :no-node #{NO-NODE}))
+(s/def :node/blossom (s/or :vertex :graph/vertex
+                           :no-node #{c/NO-NODE}))
 
 (s/def :node/augmented boolean?)
 
 ;; If p is an edge endpoint,
 ;; endpoint[p] is the vertex to which endpoint p is attached.
 ;; Not modified by the algorithm.
-(s/def :context/endpoint (s/coll-of :vertex/vertex))
+(s/def :context/endpoint (s/coll-of :graph/vertex))
 
 ;; If v is a vertex,
 ;; neighbend[v] is the list of remote endpoints of the edges attached to v.
 ;; Not modified by the algorithm.
-(s/def :context/neighbend (s/coll-of (s/coll-of :vertex/vertex)))
+(s/def :context/neighbend (s/coll-of (s/coll-of :graph/endpoint)))
 
 ;; Whether all weights in the graph are integers
 ;; Not modified by the algorithm.
 (s/def :context/integer-weights? boolean?)
 
-;; FIXME: make new partner-vertex method
 ;; If v is a vertex,
-;; mate[v] is the remote endpoint of its matched edge, or NO-NODE if it is single
+;; mate[v] is the remote endpoint of its matched edge, or NO-ENDP if it is single
 ;; (i.e. endpoint[mate[v]] is v's partner vertex).
 ;; Initially all vertices are single; updated during augmentation.
-(s/def :context/mate (s/coll-of (s/or :remote-endpoint :vertex/vertex
-                                      :single #{NO-NODE})))
+(s/def :context/mate (s/coll-of (s/or :remote-endpoint :graph/endpoint
+                                      :single #{c/NO-ENDP})))
 
 ;; If b is a top-level blossom,
 ;; label.get(b) is 0 if b is unlabeled (free),
@@ -64,12 +62,12 @@
 
 ;; If b is a labeled top-level blossom,
 ;; labelend[b] is the remote endpoint of the edge through which b obtained
-;; its label, or NO-NODE if b's base vertex is single.
+;; its label, or NO-ENDP if b's base vertex is single.
 ;; If v is a vertex inside a T-blossom and label[v] == 2,
 ;; labelend[v] is the remote endpoint of the edge through which v is
 ;; reachable from outside the blossom.
-(s/def :context/label-end (s/coll-of (s/or :vertex :vertex/vertex
-                                           :single #{NO-NODE})))
+(s/def :context/label-end (s/coll-of (s/or :vertex :graph/endpoint
+                                           :single #{c/NO-ENDP})))
 
 
 ;; If v is a vertex, in-blossom[v] is the top-level blossom to which v
@@ -97,7 +95,7 @@
 ;; blossomendps[b] is a list of endpoints on its connecting edges,
 ;; such that blossomendps[b][i] is the local endpoint of blossomchilds[b][i]
 ;; on the edge that connects it to blossomchilds[b][wrap(i+1)].
-(s/def :context/blossom-endps (s/coll-of (s/coll-of :vertex/vertex)))
+(s/def :context/blossom-endps (s/coll-of (s/coll-of :graph/vertex)))
 
 ;; If v is a free vertex (or an unreached vertex inside a T-blossom),
 ;; bestedge[v] is the edge to an S-vertex with least slack,
@@ -109,7 +107,7 @@
 (s/def :context/best-edge (s/coll-of :graph/edge-index))
 
 ;; If b is a non-trivial top-level S-blossom,
-;; blossombestedges[b] is a list of least-slack edges to neighbouring
+;; blossombestedges[b] is a list of least-slack edges to neighboring
 ;; S-blossoms, or None if no such list has been computed yet.
 ;; This is used for efficient computation of delta3.
 (s/def :context/blossom-best-edges (s/map-of :node/blossom (s/coll-of :graph/edge-index)))
@@ -132,7 +130,7 @@
 (s/def :context/allow-edge (s/coll-of boolean?))
 
 ;; Queue of newly discovered S-vertices.
-(s/def :context/queue (s/coll-of :vertex/vertex))
+(s/def :context/queue (s/coll-of :graph/vertex))
 
 ;; FIXME comments
 (s/def :context/options (s/map-of keyword? any?))
@@ -163,15 +161,11 @@
                                          :context/queue
                                          :context/options]))
 
-(s/fdef blossom.context/initialize
-  :args (s/cat :edges :context/edges
-               :options :context/options)
-  :ret :context/context)
-
+;; blossom.blossom NS
 (s/fdef blossom.blossom/blossom-leaves
   :args (s/cat :context :context/context
                :node :node/blossom)
-  :ret (s/coll-of :vertex/vertex))
+  :ret (s/coll-of :graph/vertex))
 
 (s/fdef blossom.blossom/blossom-rotate-childs
   :args (s/cat :context :context/context
@@ -184,6 +178,40 @@
                :b :node/blossom)
   :ret boolean?)
 
+(s/fdef blossom.blossom/blossom-base-assoc
+  :args (s/cat :context :context/context
+               :b :node/blossom
+               :v :graph/vertex)
+  :ret :context/context)
+
+(s/fdef blossom.blossom/blossom-base
+  :args (s/cat :context :context/context
+               :b :node/blossom)
+  :ret :graph/vertex)
+
+(s/fdef blossom.blossom/in-blossom-assoc
+  :args (s/cat :context :context/context
+               :v :graph/vertex
+               :b :node/blossom)
+  :ret :context/context)
+
+(s/fdef blossom.blossom/in-blossom
+  :args (s/cat :context :context/context
+               :v :graph/vertex)
+  :ret :node/blossom)
+
+(s/fdef blossom.blossom/blossom-parent-assoc
+  :args (s/cat :context :context/context
+               :r1 :node/blossom
+               :r2 (s/nilable :node/blossom))
+  :ret :context/context)
+
+(s/fdef blossom.blossom/blossom-parent
+  :args (s/cat :context :context/context
+               :b :node/blossom)
+  :ret (s/nilable :node/blossom))
+
+;; blossom.label NS
 (s/fdef blossom.label/add-label
   :args (s/cat :context :context/context
                :b :node/blossom
@@ -195,12 +223,13 @@
                :b :node/blossom)
   :ret :node/label)
 
-(s/fdef blossom.label/label-end-assoc
+(s/fdef blossom.label/label-endp-assoc
   :args (s/cat :context :context/context
                :b :node/blossom
-               :endpoint (s/nilable :vertex/vertex))
+               :endpoint (s/nilable :graph/vertex))
   :ret :context/context)
 
+;; blossom.dual NS
 (s/fdef blossom.dual/best-edge
   :args (s/cat :context :context/context
                :b :node/blossom)
@@ -222,75 +251,48 @@
                :edge :edge/edge)
   :ret :context/context)
 
-(s/fdef blossom.blossom/blossom-base-assoc
-  :args (s/cat :context :context/context
-               :b :node/blossom
-               :v :vertex/vertex)
-  :ret :context/context)
-
-(s/fdef blossom.blossom/blossom-base
-  :args (s/cat :context :context/context
-               :b :node/blossom)
-  :ret :vertex/vertex)
-
-(s/fdef blossom.blossom/in-blossom-assoc
-  :args (s/cat :context :context/context
-               :v :vertex/vertex
-               :b :node/blossom)
-  :ret :context/context)
-
-(s/fdef blossom.blossom/in-blossom
-  :args (s/cat :context :context/context
-               :v :vertex/vertex)
-  :ret :node/blossom)
-
-(s/fdef blossom.blossom/blossom-parent-assoc
-  :args (s/cat :context :context/context
-               :r1 :node/blossom
-               :r2 (s/nilable :node/blossom))
-  :ret :context/context)
-
-(s/fdef blossom.blossom/blossom-parent
-  :args (s/cat :context :context/context
-               :b :node/blossom)
-  :ret (s/nilable :node/blossom))
-
-(s/fdef blossom.mate/mate-assoc
-  :args (s/cat :context :context/context
-               :v1 :vertex/vertex
-               :v2 :vertex/vertex)
-  :ret :context/context)
-
-(s/fdef blossom.mate/mate
-  :args (s/cat :context :context/context
-               :v :vertex/vertex)
-  :ret :vertex/vertex)
-
 (s/fdef blossom.dual/dual-var-assoc
   :args (s/cat :context :context/context
-               :v :vertex/vertex
+               :v :graph/vertex
                :x :edge/weight)
   :ret :context/context)
 
 (s/fdef blossom.dual/dual-var
   :args (s/cat :context :context/context
-               :v :vertex/vertex)
+               :v :graph/vertex)
   :ret :edge/weight)
-
-(s/fdef blossom.queue/queue-push
-  :args (s/cat :context :context/context
-               :coll (s/coll-of :vertex/vertex :distinct true))
-  :ret :context/context)
 
 (s/fdef blossom.dual/slack
   :args (s/or :vertices (s/cat :context :context/context
-                               :v :vertex/vertex
-                               :w :vertex/vertex)
+                               :v :graph/vertex
+                               :w :graph/vertex)
               :edge (s/cat :context :context/context
                            :edge :edge/edge))
   :ret :edge/weight)
 
+;; blossom.mate NS
+(s/fdef blossom.mate/mate-assoc
+  :args (s/cat :context :context/context
+               :v1 :graph/vertex
+               :v2 :graph/vertex)
+  :ret :context/context)
+
+(s/fdef blossom.mate/mate
+  :args (s/cat :context :context/context
+               :v :graph/vertex)
+  :ret :graph/vertex)
+
+;; blossom.queue NS
+(s/fdef blossom.queue/queue-push
+  :args (s/cat :context :context/context
+               :coll (s/coll-of :graph/vertex :distinct true))
+  :ret :context/context)
+
 ;; ns: blossom.max-weight-matching
+(s/fdef blossom.max-weight-matching/initialize-context
+  :args (s/cat :edges :context/edges
+               :options :context/options)
+  :ret :context/context)
 
 (s/fdef blossom.max-weight-matching/entry-child-index
   :args (s/cat :context :context/context
@@ -299,22 +301,23 @@
 
 (s/fdef blossom.max-weight-matching/assign-label
   :args (s/cat :context :context/context
-               :w :vertex/vertex
+               :w :graph/vertex
                :t :node/label
-               :v (s/nilable :vertex/vertex))
+               :p (s/or :endp :graph/endpoint
+                        :no-endp #{c/NO-ENDP}))
   :ret :context/context)
 
 (s/fdef blossom.max-weight-matching/scan-blossom
   :args (s/cat :context :context/context
-               :w :vertex/vertex
-               :v :vertex/vertex)
+               :w :graph/vertex
+               :v :graph/vertex)
   :ret :context/context)
 
 (s/fdef blossom.max-weight-matching/add-blossom
   :args (s/cat :context :context/context
-               :base :vertex/vertex
-               :v :vertex/vertex
-               :w :vertex/vertex)
+               :base :graph/vertex
+               :v :graph/vertex
+               :w :graph/vertex)
   :ret :context/context)
 
 (s/fdef blossom.max-weight-matching/promote-sub-blossoms-to-top-blossoms
@@ -347,7 +350,7 @@
 (s/fdef blossom.max-weight-matching/augment-blossom
   :args (s/cat :context :context/context
                :b :node/blossom
-               :v :vertex/vertex)
+               :v :graph/vertex)
   :ret :context/context)
 
 (s/fdef blossom.max-weight-matching/initialize-stage
@@ -360,7 +363,7 @@
 
 (s/fdef blossom.max-weight-matching/scan-neighbors
   :args (s/cat :context :context/context
-               :v :vertex/vertex)
+               :v :graph/vertex)
   :ret (s/keys :req-un [:context/context
                         :node/augmented]))
 

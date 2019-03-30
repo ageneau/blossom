@@ -1,5 +1,6 @@
 (ns blossom.blossom-test
-  (:require [blossom.graph :as graph :refer [NO-NODE]]
+  (:require [blossom.constants :as c]
+            [blossom.graph :as graph]
             [blossom.matching
              :refer
              [is-matching?
@@ -28,17 +29,17 @@
 (deftest test-12
   (testing "test-12"
     (let [edges [[1 2 10] [2 3 11]]]
-      (is (= [NO-NODE NO-NODE 3 2] (max-weight-matching edges))))))
+      (is (= [c/NO-NODE c/NO-NODE 3 2] (max-weight-matching edges))))))
 
 (deftest test-13
   (testing "test-13"
     (let [edges [[1 2 5] [2 3 11] [3 4 5]]]
-      (is (= [NO-NODE NO-NODE 3 2 NO-NODE] (max-weight-matching edges))))))
+      (is (= [c/NO-NODE c/NO-NODE 3 2 c/NO-NODE] (max-weight-matching edges))))))
 
 (deftest test-14-maxcard
   (testing "maximum cardinality"
     (let [edges [[1 2 5] [2 3 11] [3 4 5]]]
-      (is (= [NO-NODE 2 1 4 3]
+      (is (= [c/NO-NODE 2 1 4 3]
              (max-weight-matching edges {:max-cardinality true}))))))
 
 (deftest test-15-float
@@ -47,7 +48,7 @@
                  [2 3 (Math/exp 1)]
                  [1 3 3.0]
                  [1 4 (Math/sqrt 2.0)]]]
-      (is (= [NO-NODE 4 3 2 1]
+      (is (= [c/NO-NODE 4 3 2 1]
              (max-weight-matching edges))))))
 
 (deftest test-16-negative
@@ -57,9 +58,9 @@
                  [2 3 1]
                  [2 4 -1]
                  [3 4 -6]]]
-      (is (= [NO-NODE 2 1 NO-NODE NO-NODE]
+      (is (= [c/NO-NODE 2 1 c/NO-NODE c/NO-NODE]
              (max-weight-matching edges {:max-cardinality false})))
-      (is (= [NO-NODE 3 4 1 2]
+      (is (= [c/NO-NODE 3 4 1 2]
              (max-weight-matching edges {:max-cardinality true}))))))
 
 (deftest test-20-sblossom
@@ -74,9 +75,9 @@
                   [3 4 7]
                   [1 6 5]
                   [4 5 6]]]
-      (is (= [NO-NODE  2  1  4  3]
+      (is (= [c/NO-NODE  2  1  4  3]
              (max-weight-matching edges1)))
-      (is (= [NO-NODE  6  3  2  5  4  1]
+      (is (= [c/NO-NODE  6  3  2  5  4  1]
              (max-weight-matching edges2))))))
 
 (deftest test-21-tblossom
@@ -99,11 +100,11 @@
                   [1 4 5]
                   [4 5 3]
                   [3 6 4]]]
-      (is (= [NO-NODE  6  3  2  5  4  1]
+      (is (= [c/NO-NODE  6  3  2  5  4  1]
              (max-weight-matching edges1)))
-      (is (= [NO-NODE  6  3  2  5  4  1]
+      (is (= [c/NO-NODE  6  3  2  5  4  1]
              (max-weight-matching edges2)))
-      (is (= [NO-NODE  2  1  6  5  4  3]
+      (is (= [c/NO-NODE  2  1  6  5  4  3]
              (max-weight-matching edges3))))))
 
 (deftest test-22-s-nest
@@ -115,7 +116,7 @@
                  [3 5 8]
                  [4 5 10]
                  [5 6 6]]]
-      (is (= [NO-NODE  3  4  1  2  6  5]
+      (is (= [c/NO-NODE  3  4  1  2  6  5]
              (max-weight-matching edges))))))
 
 (deftest test-23-s-relabel-nest
@@ -129,7 +130,7 @@
                  [5 6 10]
                  [6 7 10]
                  [7 8 8]]]
-      (is (= [NO-NODE  2  1  4  3  6  5  8  7]
+      (is (= [c/NO-NODE  2  1  4  3  6  5  8  7]
              (max-weight-matching edges))))))
 
 (deftest test-24-s-nest-expand
@@ -144,7 +145,7 @@
                  [5 7 12]
                  [6 7 14]
                  [7 8 12]]]
-      (is (= [NO-NODE  2  1  5  6  3  4  8  7]
+      (is (= [c/NO-NODE  2  1  5  6  3  4  8  7]
              (max-weight-matching edges))))))
 
 (deftest test-25-s-t-expand
@@ -157,7 +158,7 @@
                  [4 5 25]
                  [4 8 14]
                  [5 7 13]]]
-      (is (= [NO-NODE  6  3  2  8  7  1  5  4]
+      (is (= [c/NO-NODE  6  3  2  8  7  1  5  4]
              (max-weight-matching edges))))))
 
 (deftest test-26-s-nest-t-expand
@@ -171,7 +172,7 @@
                  [4 5 13]
                  [4 7 7]
                  [5 6 7]]]
-      (is (= [NO-NODE  8  3  2  7  6  5  4  1]
+      (is (= [c/NO-NODE  8  3  2  7  6  5  4  1]
              (max-weight-matching edges))))))
 
 (deftest test-30-tnasty-expand
@@ -186,7 +187,7 @@
                  [4 8 35]
                  [5 7 26]
                  [9 10 5]]]
-      (is (= [NO-NODE  6  3  2  8  7  1  5  4  10  9]
+      (is (= [c/NO-NODE  6  3  2  8  7  1  5  4  10  9]
              (max-weight-matching edges))))))
 
 (deftest test-31-s-nest-t-expand
@@ -201,7 +202,7 @@
                  [4 8 26]
                  [5 7 40]
                  [9 10 5]]]
-      (is (= [NO-NODE  6  3  2  8  7  1  5  4  10  9]
+      (is (= [c/NO-NODE  6  3  2  8  7  1  5  4  10  9]
              (max-weight-matching edges))))))
 
 (deftest test-32-s-nest-t-expand
@@ -216,7 +217,7 @@
                  [4 8 28]
                  [5 7 26]
                  [9 10 5]]]
-      (is (= [NO-NODE  6  3  2  8  7  1  5  4  10  9]
+      (is (= [c/NO-NODE  6  3  2  8  7  1  5  4  10  9]
              (max-weight-matching edges))))))
 
 (deftest test-33-s-nest-t-expand
@@ -234,7 +235,7 @@
                  [5 9 36]
                  [7 10 26]
                  [11 12 5]]]
-      (is (= [NO-NODE  8  3  2  6  9  4  10  1  5  7  12  11]
+      (is (= [c/NO-NODE  8  3  2  6  9  4  10  1  5  7  12  11]
              (max-weight-matching edges))))))
 
 (deftest test-34-s-nest-t-expand
@@ -250,7 +251,7 @@
                  [7 6 10]
                  [8 10 10]
                  [4 9 30]]]
-      (is (= [NO-NODE  2  1  5  9  3  7  6  10  4  8]
+      (is (= [c/NO-NODE  2  1  5  9  3  7  6  10  4  8]
              (max-weight-matching edges))))))
 
 (defn complete-graph [n]
@@ -557,7 +558,7 @@ regardless of the order in which nodes are added to the graph."
     (let [edges (->> "large_graph1.json"
                      utils/read-resource
                      utils/parse-json)]
-      (is (= [54 48 26 47 23 40 42 43 27 44 36 34 16 49 22 31 12 30 38 24 NO-NODE 51 14 4 19 41 2 8 53 50 17 15 46 45 11 39 10 52 18 35 5 25 6 7 9 33 32 3 1 13 29 21 37 28 0]
+      (is (= [54 48 26 47 23 40 42 43 27 44 36 34 16 49 22 31 12 30 38 24 c/NO-NODE 51 14 4 19 41 2 8 53 50 17 15 46 45 11 39 10 52 18 35 5 25 6 7 9 33 32 3 1 13 29 21 37 28 0]
              (max-weight-matching edges))))))
 
 (deftest complete-graph-2
@@ -565,5 +566,5 @@ regardless of the order in which nodes are added to the graph."
     (let [edges (->> "large_graph2.json"
                      utils/read-resource
                      utils/parse-json)]
-      (is (= [3 19 11 0 20 NO-NODE 9 13 25 6 14 2 27 7 10 17 28 15 26 1 4 22 21 24 23 8 18 12 16]
+      (is (= [3 19 11 0 20 c/NO-NODE 9 13 25 6 14 2 27 7 10 17 28 15 26 1 4 22 21 24 23 8 18 12 16]
              (max-weight-matching edges))))))

@@ -1,31 +1,34 @@
 (ns blossom.graph
   (:require [loom.graph :as lg]
+            [blossom.constants :as c]
             [blossom.context]
             [clojure.spec.alpha :as s]))
 
-(def NO-NODE -1)
-(def no-node? #(= NO-NODE %))
-(def some-node? #(not= NO-NODE %))
+(def no-node? #(= c/NO-NODE %))
+(def some-node? #(not= c/NO-NODE %))
 
-(def NO-EDGE -1)
-(def no-edge? #(= NO-EDGE %))
-(def some-edge? #(not= NO-EDGE %))
+(def no-edge? #(= c/NO-EDGE %))
+(def some-edge? #(not= c/NO-EDGE %))
 
 (defprotocol PGraph
-  (edges [g k])
-  (endpoint [g p])
-  (neighbend [g v]))
+  (edge [g k]))
+
+(defprotocol PWeightedEdge
+  (src [edge] "Returns the source node of the edge")
+  (dest [edge] "Returns the dest node of the edge")
+  (weight [edge] "Returns the weight of the edge"))
+
+(extend-type #?(:clj clojure.lang.IPersistentVector
+                :cljs cljs.core.PersistentVector)
+  PWeightedEdge
+  (src [edge] (get edge 0))
+  (dest [edge] (get edge 1))
+  (weight [edge] (get edge 2)))
 
 (extend-type blossom.context.Context
   PGraph
-  (edges [g k]
-    (nth (:edges g) k))
-
-  (endpoint [g p]
-    (nth (:endpoint g) p))
-
-  (neighbend [g v]
-    (nth (:neighbend g) v)))
+  (edge [g k]
+    (nth (:edges g) k)))
 
 (defn edges-with-weights
   ([g]
@@ -54,9 +57,8 @@
        (mapcat (fn [[i j _]] [i j]))
        (reduce max)))
 
-(defn max-weight [g]
-  (->> g
-       :edges
+(defn max-weight [edges]
+  (->> edges
        (map last)
        (reduce max)))
 
@@ -77,12 +79,13 @@
           (map-indexed vector edges)))
 
 (defn initialize [edges]
-  (let [[nedge max-vertex-id endpoint neighbend integer-weights?]
-        ((juxt count max-vertex-id compute-endpoint compute-neighbend integer-weights?) edges)
+  (let [[nedge max-vertex-id endpoint neighbend max-weight integer-weights?]
+        ((juxt count max-vertex-id compute-endpoint compute-neighbend max-weight integer-weights?) edges)
         nvertex (inc max-vertex-id)]
     {:edges edges
      :nedge nedge
      :nvertex nvertex
      :endpoint endpoint
      :neighbend neighbend
+     :max-weight max-weight
      :integer-weights? integer-weights?}))

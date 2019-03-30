@@ -1,6 +1,8 @@
 (ns blossom.primal-dual
   (:require [blossom.blossom :as blossom]
+            [blossom.constants :as c]
             [blossom.dual :as dual]
+            [blossom.endpoint :as endp]
             [blossom.graph :as graph]
             [blossom.label :as label]
             [blossom.options :as options]
@@ -35,18 +37,18 @@
         ;; This subblossom does not have a list of least-slack edges;
         ;; get the information from the vertices.
         (for [v (blossom/blossom-leaves context bv)
-              p (graph/neighbend context v)]
-          (quot p 2))))
+              p (endp/vertex-endpoints context v)]
+          (endp/edge context p))))
 
   (compute-my-best-edges
     [context b]
     (reduce
      (fn [best-edge-to bv]
        (reduce (fn [best-edge-to k]
-                 (let [[i j wt] (graph/edges context k)
-                       [i j] (cond-> [i j]
-                               (= b (blossom/in-blossom context j))
-                               reverse)
+                 (let [edge (graph/edge context k)
+                       [i j] (if (= b (blossom/in-blossom context (graph/dest edge)))
+                               [(graph/dest edge) (graph/src edge)]
+                               [(graph/src edge) (graph/dest edge)])
                        bj (blossom/in-blossom context j)
                        {:keys [edge-bj slack-bj]} (get best-edge-to bj)]
                    (cond-> best-edge-to
@@ -104,7 +106,9 @@
   PPrimalDual
   (compute-delta-1
     [context]
-    {:delta (reduce min (subvec (:dual-var context) 0 (:nvertex context)))})
+    {:delta (->> (seq (:dual-var context))
+                 (take (:nvertex context))
+                 (reduce min))})
 
   (compute-delta-2
     [context]
@@ -156,7 +160,7 @@
           best-edges (vec (map :edge (vals best-edges-and-slack)))
 
           my-best-edge (if (empty? best-edges-and-slack)
-                         graph/NO-EDGE
+                         c/NO-EDGE
                          (:edge (reduce (partial min-key :slack)
                                         (reverse (vals best-edges-and-slack)))))]
       (-> context

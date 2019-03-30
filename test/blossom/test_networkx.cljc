@@ -4,7 +4,6 @@
             [blossom.primal-dual :as pdual]
             [blossom.test-utils :as utils]
             [blossom.specs]
-            [clojure.data :as data]
             [clojure.spec.alpha :as s]
             #?(:clj [clojure.test :refer (is deftest testing)]
                :cljs [cljs.test :refer (is deftest testing)])))
@@ -41,14 +40,12 @@
                      :promote-sub-blossoms-to-top-blossoms {:func #'mwm/promote-sub-blossoms-to-top-blossoms}
                      :move-to-base-relabeling {:func #'mwm/move-to-base-relabeling}
                      :move-back-to-entry-child-relabeling {:func #'mwm/move-back-to-entry-child-relabeling}
-                     :relabel-base-t-subblossom {:func #'mwm/relabel-base-t-subblossom}
-                     :expand-tight-sblossoms {:func #'mwm/expand-tight-sblossoms}
                      :scan-neighbors {:func #'mwm/scan-neighbors
                                       :impure-func? true}
                      :find-augmenting-path {:func #'mwm/find-augmenting-path
                                             :impure-func? true}
                      :compute-delta {:func #'pdual/compute-delta
-                                                :impure-func? true}
+                                     :impure-func? true}
                      :verify-optimum {:func #'mwm/verify-optimum}
                      :max-weight-matching {:func #'mwm/max-weight-matching-impl
                                            :python-func-name "max-weight-matching"
@@ -152,7 +149,6 @@
 
 (defmethod clojure-return-value :max-weight-matching
   [test-result]
-  #_(dissoc (get test-result :ret-clojure) :context)
   (get-in test-result [:ret-clojure :result]))
 
 (defmulti clojure-return-context get-func-name)
@@ -201,12 +197,10 @@
     (when-not (= :pure-function ftype)
       (is (nil? (s/explain-data :context/context clojure-return-context))
           (str "Invalid clojure-return-context for id " test-id))
-      (is (= [nil nil python-return-context]
-             (data/diff python-return-context clojure-return-context))
+      (is (= python-return-context clojure-return-context)
           (str "Unexpected clojure-return-context for id " test-id)))
     (when (= :pure-function ftype)
-      (is (= [nil nil python-return-context]
-             (data/diff python-input-context python-return-context))
+      (is (= python-input-context python-return-context)
           (str "Unexpected python-return-context context for id " test-id)))
 
     (when-not (= :procedure ftype)

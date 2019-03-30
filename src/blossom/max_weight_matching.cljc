@@ -1,7 +1,9 @@
 (ns blossom.max-weight-matching
   (:require [blossom.blossom :as blossom]
             [blossom.context :as ctx]
+            [blossom.constants :as c]
             [blossom.dual :as dual]
+            [blossom.endpoint :as endp]
             [blossom.graph :as graph]
             [blossom.label :as label]
             [blossom.mate :as mate]
@@ -19,7 +21,7 @@
   (scan-blossom [context v w]
     "Trace back from vertices `v` and `w` to discover either a new blossom
   or an augmenting path. Return the base vertex of the new blossom,
-  or NoNode if an augmenting path was found.")
+  or NO-NODE if an augmenting path was found.")
   (find-parent-blossoms [context b])
   (trace-to-base [context v bb])
   (expand-tight-sblossoms [context])
@@ -74,14 +76,17 @@
     "keep track of the least-slack non-allowable edge to
   a different S-blossom.")
   (consider-tight-edge
-    [context p v]))
+    [context p v])
+  (mate-endps-to-vertices
+    [context]
+    "Transform mate[] such that mate[v] is the vertex to which v is paired. Return the updated mate[] sequence")
+  (valid-matching? [context matching]
+    "Check if the matching is symmetric"))
 
 (extend-type blossom.context.Context
   PMaxWeightMatchingImpl
   (entry-child [context b]
-    (blossom/in-blossom context
-                        (graph/endpoint context
-                                        (bit-xor (label/label-end context b) 1))))
+    (blossom/in-blossom context (endp/opposite-vertex context (label/label-endp context b))))
 
   (assign-label
     [context w t p]
@@ -92,26 +97,26 @@
       (-> context
           (label/add-label w t)
           (label/add-label b t)
-          (label/label-end-assoc w p)
-          (label/label-end-assoc b p)
+          (label/label-endp-assoc w p)
+          (label/label-endp-assoc b p)
           (dual/best-edge-clear w)
           (dual/best-edge-clear b)
           (cond->
-            (= label/S-BLOSSOM t)
+            (= c/S-BLOSSOM t)
             (queue/queue-push (if-not (blossom/trivial-blossom? context b)
                                 (blossom/blossom-leaves context b)
                                 [b]))
 
-            (= label/T-BLOSSOM t)
-            (assign-label (graph/endpoint context (mate/mate context base))
-                          label/S-BLOSSOM
+            (= c/T-BLOSSOM t)
+            (assign-label (endp/vertex context (mate/mate context base))
+                          c/S-BLOSSOM
                           (bit-xor (mate/mate context base) 1))))))
 
   (scan-blossom
     [context v w]
     ;; Trace back from v and w, placing breadcrumbs as we go.
     (loop [path []
-           base graph/NO-NODE
+           base c/NO-NODE
            v v
            w w
            context context]
@@ -124,19 +129,19 @@
             (blossom/blossom-base context b)
             (let [_ (assert (label/labeled-s-blossom? context b))
                   path (conj path b)
-                  context (label/add-label context b label/BREADCRUMB)
+                  context (label/add-label context b c/BREADCRUMB)
                   ;; Trace one step back.
-                  _ (assert (= (label/label-end context b)
+                  _ (assert (= (label/label-endp context b)
                                (mate/mate context (blossom/blossom-base context b))))
-                  v (if (graph/no-node? (label/label-end context b))
+                  v (if (endp/no-endp? (label/label-endp context b))
                       ;; The base of blossom b is single; stop tracing this path.
-                      graph/NO-NODE
-                      (let [v (graph/endpoint context (label/label-end context b))
+                      c/NO-NODE
+                      (let [v (endp/vertex context (label/label-endp context b))
                             b (blossom/in-blossom context v)]
                         (assert (label/labeled-t-blossom? context b))
                         ;; b is a T-blossom; trace one more step back.
-                        (assert (graph/some-node? (label/label-end context b)))
-                        (graph/endpoint context (label/label-end context b))))]
+                        (assert (endp/some-endp? (label/label-endp context b)))
+                        (endp/vertex context (label/label-endp context b))))]
               ;; Swap v and w so that we alternate between both paths.
               (if (graph/some-node? w)
                 (recur path base w v context)
@@ -152,15 +157,17 @@
           (do
             (assert (or (label/labeled-t-blossom? context bv)
                         (and (label/labeled-s-blossom? context bv)
-                             (= (label/label-end context bv)
+                             (= (label/label-endp context bv)
                                 (mate/mate context (blossom/blossom-base context bv))))))
-            (assert (graph/some-node? (label/label-end context bv)))
-            (recur (graph/endpoint context (label/label-end context bv))
+            (assert (endp/some-endp? (label/label-endp context bv)))
+            (recur (endp/vertex context (label/label-endp context bv))
                    (conj path bv)))))))
 
   (add-blossom
     [context base k]
-    (let [[v w wt] (graph/edges context k)
+    (let [edge (graph/edge context k)
+          v (graph/src edge)
+          w (graph/dest edge)
           bb (blossom/in-blossom context base)
 
           ;; Create a new top-level blossom.
@@ -182,11 +189,11 @@
           path (concat [bb] (reverse path1) path2)
           endps (concat (->> path1
                              (map (fn [bv]
-                                    (label/label-end context bv)))
+                                    (label/label-endp context bv)))
                              reverse)
                         [(* 2 k)]
                         (map (fn [bv]
-                               (bit-xor (label/label-end context bv) 1))
+                               (endp/opposite context (label/label-endp context bv)))
                              path2))
 
           context (reduce (fn [context bv]
@@ -202,8 +209,8 @@
           ;; Set label to S.
           _ (assert (label/labeled-s-blossom? context bb))
           context (-> context
-                      (label/add-label b label/S-BLOSSOM)
-                      (label/label-end-assoc b (label/label-end context bb))
+                      (label/add-label b c/S-BLOSSOM)
+                      (label/label-endp-assoc b (label/label-endp context bb))
                       ;; Set dual variable to zero.
                       (dual/dual-var-assoc b 0))
 
@@ -250,12 +257,12 @@
 
   (move-to-base-relabeling
     [context b]
-    (let [_ (assert (graph/some-node? (label/label-end context b)))
+    (let [_ (assert (endp/some-endp? (label/label-endp context b)))
           entry-child (entry-child context b)
           [j jstep endptrick] (blossom-loop-direction context b entry-child)]
       ;; Move along the blossom until we get to the base.
       (loop [j j
-             p (label/label-end context b)
+             p (label/label-endp context b)
              context context]
         (if (zero? j)
           ;; Relabel the base T-sub-blossom WITHOUT stepping through to
@@ -264,14 +271,14 @@
           (let [endp (utils/wget (blossom/blossom-endps context b) (- j endptrick))
                 context (-> context
                             ;; Relabel the T-sub-blossom.
-                            (label/remove-label (graph/endpoint context (bit-xor p 1)))
-                            (label/remove-label (graph/endpoint context (bit-xor endp endptrick 1)))
-                            (assign-label (graph/endpoint context (bit-xor p 1)) label/T-BLOSSOM p)
-                            (dual/allow-edge-assoc (quot endp 2) true))
+                            (label/remove-label (endp/opposite-vertex context p))
+                            (label/remove-label (endp/opposite-vertex context (bit-xor endp endptrick)))
+                            (assign-label (endp/opposite-vertex context p) c/T-BLOSSOM p)
+                            (dual/allow-edge-assoc (endp/edge context endp) true))
                 ;; Step to the next S-sub-blossom and note its forward endpoint.
                 j (+ j jstep)
                 p (bit-xor (utils/wget (blossom/blossom-endps context b) (- j endptrick)) endptrick)
-                context (dual/allow-edge-assoc context (quot p 2) true)]
+                context (dual/allow-edge-assoc context (endp/edge context p) true)]
             ;; Step to the next T-sub-blossom.
             (recur (+ j jstep) p context))))))
 
@@ -287,7 +294,7 @@
     ;; we reach the base.
     ;; Figure out through which sub-blossom the expanding blossom
     ;; obtained its label initially.
-    (let [_ (assert (graph/some-node? (label/label-end context b)))
+    (let [_ (assert (endp/some-endp? (label/label-endp context b)))
           entry-child (entry-child context b)
           [_ jstep endptrick] (blossom-loop-direction context b entry-child)
           j jstep]
@@ -309,23 +316,23 @@
                        (assert (= (blossom/in-blossom context v) bv))
                        (-> context
                            (label/remove-label v)
-                           (label/remove-label (graph/endpoint context (mate/mate context (blossom/blossom-base context bv))))
-                           (assign-label v label/T-BLOSSOM (label/label-end context v)))))))))))
+                           (label/remove-label (endp/vertex context (mate/mate context (blossom/blossom-base context bv))))
+                           (assign-label v c/T-BLOSSOM (label/label-endp context v)))))))))))
 
   (relabel-base-t-subblossom [context b p]
     (let [bv (first (blossom/blossom-childs context b))]
       (-> context
-          (label/add-label bv label/T-BLOSSOM)
-          (label/add-label (graph/endpoint context (bit-xor p 1)) label/T-BLOSSOM)
-          (label/label-end-assoc bv p)
-          (label/label-end-assoc (graph/endpoint context (bit-xor p 1)) p)
+          (label/add-label bv c/T-BLOSSOM)
+          (label/add-label (endp/opposite-vertex context p) c/T-BLOSSOM)
+          (label/label-endp-assoc bv p)
+          (label/label-endp-assoc (endp/opposite-vertex context p) p)
           (dual/best-edge-clear bv))))
 
   (recycle-blossom [context b]
     ;; Recycle the blossom number.
     (-> context
         (label/remove-label b)
-        (label/label-end-clear b)
+        (label/label-endp-clear b)
         (blossom/blossom-childs-clear b)
         (blossom/blossom-endps-clear b)
         (blossom/blossom-base-clear b)
@@ -373,10 +380,8 @@
   (match-endpoint
     [context p]
     (-> context
-        (mate/mate-assoc (graph/endpoint context p)
-                         (bit-xor p 1))
-        (mate/mate-assoc (graph/endpoint context (bit-xor p 1))
-                         p)))
+        (mate/mate-assoc (endp/vertex context p) (endp/opposite context p))
+        (mate/mate-assoc (endp/opposite-vertex context p) p)))
 
   (augment-blossom
     [context b v]
@@ -399,11 +404,11 @@
                             j (+ j jstep)
                             p (bit-xor (utils/wget (blossom/blossom-endps context b) (- j endptrick))
                                        endptrick)
-                            x (graph/endpoint context p)
+                            x (endp/vertex context p)
 
                             context (augment-blossom-step context b j x)
 
-                            x (graph/endpoint context (bit-xor p 1))
+                            x (endp/opposite-vertex context p)
                             ;; Step to the next sub-blossom and augment it recursively.
                             j (+ j jstep)
                             context (augment-blossom-step context b j x)
@@ -417,7 +422,9 @@
 
   (augment-matching
     [context k]
-    (let [[v w wt] (graph/edges context k)]
+    (let [edge (graph/edge context k)
+          v (graph/src edge)
+          w (graph/dest edge)]
       (loop [context context
              permuted false
              s v
@@ -427,7 +434,7 @@
         ;; edges as we go.
         (let [bs (blossom/in-blossom context s)
               _ (assert (label/labeled-s-blossom? context bs))
-              _ (assert (= (label/label-end context bs)
+              _ (assert (= (label/label-endp context bs)
                            (mate/mate context (blossom/blossom-base context bs))))
               context (cond-> context
                         (not (blossom/trivial-blossom? context bs))
@@ -437,17 +444,17 @@
                         ;; Update mate[s]
                         (mate/mate-assoc s p))]
           ;; Trace one step back.
-          (if (graph/no-node? (label/label-end context bs))
+          (if (endp/no-endp? (label/label-endp context bs))
             ;; Reached single vertex; try with [s p] = [w 2*k] or stop.
             (if-not permuted
               (recur context true w (* 2 k))
               context)
-            (let [t (graph/endpoint context (label/label-end context bs))
+            (let [t (endp/vertex context (label/label-endp context bs))
                   bt (blossom/in-blossom context t)
                   _ (assert (label/labeled-t-blossom? context bt))
                   ;; Trace one step back.
-                  s (graph/endpoint context (label/label-end context bt))
-                  j (graph/endpoint context (bit-xor (label/label-end context bt) 1))
+                  s (endp/vertex context (label/label-endp context bt))
+                  j (endp/opposite-vertex context (label/label-endp context bt))
 
                   ;; Augment through the T-blossom from j to base.
                   _ (assert (= t (blossom/blossom-base context bt)))
@@ -457,8 +464,8 @@
 
                             :true
                             ;; Update mate[j]
-                            (mate/mate-assoc j (label/label-end context bt)))]
-              (recur context permuted s (bit-xor (label/label-end context bt) 1))))))))
+                            (mate/mate-assoc j (label/label-endp context bt)))]
+              (recur context permuted s (endp/opposite context (label/label-endp context bt)))))))))
 
   (initialize-stage
     [context]
@@ -480,9 +487,9 @@
         (as-> context
             (reduce (fn [context v]
                       (cond-> context
-                        (and (graph/no-node? (mate/mate context v))
+                        (and (endp/no-endp? (mate/mate context v))
                              (label/unlabeled? context (blossom/in-blossom context v)))
-                        (assign-label v label/S-BLOSSOM graph/NO-NODE)))
+                        (assign-label v c/S-BLOSSOM c/NO-ENDP)))
                     context
                     (blossom/vertex-range context)))))
 
@@ -526,14 +533,14 @@
 
   (consider-tight-edge
     [context p v]
-    (let [w (graph/endpoint context p)
-          k (quot p 2)
+    (let [w (endp/vertex context p)
+          k (endp/edge context p)
           bw (blossom/in-blossom context w)]
       (cond
         (label/unlabeled? context bw)
         ;; (C1) w is a free vertex;
         ;; label w with T and label its mate with S (R12).
-        {:context (assign-label context w label/T-BLOSSOM (bit-xor p 1))
+        {:context (assign-label context w c/T-BLOSSOM (endp/opposite context p))
          :augmented false}
 
         (label/labeled-s-blossom? context bw)
@@ -559,8 +566,8 @@
         ;; during T-blossom expansion).
         (do (assert (label/labeled-t-blossom? context bw))
             {:context (-> context
-                          (label/add-label w label/T-BLOSSOM)
-                          (label/label-end-assoc w (bit-xor p 1)))
+                          (label/add-label w c/T-BLOSSOM)
+                          (label/label-endp-assoc w (endp/opposite context p)))
              :augmented false})
 
         :else
@@ -569,16 +576,16 @@
 
   (scan-neighbors
     [context v]
-    (loop [neighbors (graph/neighbend context v)
+    (loop [neighbors (endp/vertex-endpoints context v)
            result {:context context
                    :augmented false}]
       (if (or (not (seq neighbors))
               (:augmented result))
         result
         (let [p (first neighbors)
-              k (quot p 2)
+              k (endp/edge context p)
               {:keys [context augmented]} result
-              w (graph/endpoint context p)
+              w (endp/vertex context p)
               bv (blossom/in-blossom context v)
               bw (blossom/in-blossom context w)]
           (recur (next neighbors)
@@ -630,7 +637,9 @@
     [context]
     (let [max-cardinality (options/get-option context :max-cardinality)
           min-dual (:delta (pdual/compute-delta-1 context))
-          min-dual-blossoms (reduce min (subvec (:dual-var context) (:nvertex context)))
+          min-dual-blossoms (->> (seq (:dual-var context))
+                                 (drop (:nvertex context))
+                                 (reduce min))
           vdual-offset (if max-cardinality
                          ;; Vertices may have negative dual
                          ;; find a constant non-negative number to add to all vertex duals.
@@ -651,8 +660,9 @@
         ;; 0. all edges have non-negative slack and
         ;; 1. all matched edges have zero slack;
         (reduce
-         (fn [problems [k [i j wt :as edge]]]
-           (let [s (dual/slack context k)
+         (fn [problems [k edge]]
+           (let [[i j wt] [(graph/src edge) (graph/dest edge) (graph/weight edge)]
+                 s (dual/slack context k)
                  iblossoms (find-parent-blossoms context i)
                  jblossoms (find-parent-blossoms context j)
                  s (->> (interleave iblossoms jblossoms)
@@ -662,12 +672,12 @@
                                (* 2 (dual/dual-var context bi))))
                         (reduce + s))
 
-                 matei (if (graph/no-node? (mate/mate context i))
-                         graph/NO-NODE
-                         (quot (mate/mate context i) 2))
-                 matej (if (graph/no-node? (mate/mate context j))
-                         graph/NO-NODE
-                         (quot (mate/mate context j) 2))]
+                 matei (if (endp/no-endp? (mate/mate context i))
+                         c/NO-EDGE
+                         (endp/edge context (mate/mate context i)))
+                 matej (if (endp/no-endp? (mate/mate context j))
+                         c/NO-EDGE
+                         (endp/edge context (mate/mate context j)))]
              (cond-> problems
                (or (neg? s)
                    (and (= matei k)
@@ -696,7 +706,7 @@
         (reduce
          (fn [problems v]
            (cond-> problems
-             (not (or (graph/some-node? (mate/mate context v))
+             (not (or (endp/some-endp? (mate/mate context v))
                       (zero? (+ (dual/dual-var context v) vdual-offset))))
              (conj {:type :invalid-gnodes
                     :v v
@@ -716,11 +726,9 @@
                       (->> (blossom/blossom-endps context b)
                            (keep-indexed #(if (odd? %1) %2))
                            (some (fn [p]
-                                   (or (not= (mate/mate context
-                                                        (graph/endpoint context p))
-                                             (bit-xor p 1))
-                                       (not= (mate/mate context
-                                                        (graph/endpoint context (bit-xor p 1)))
+                                   (or (not= (mate/mate context (endp/vertex context p))
+                                             (endp/opposite context p))
+                                       (not= (mate/mate context (endp/opposite-vertex context p))
                                              p)))))))
              (conj {:type :invalid-blossom-not-full
                     :b b})))
@@ -732,12 +740,13 @@
     (cond-> context
       (some #{delta-type} [2 3])
       (as-> context
-          (let [[v w] (-> (graph/edges context delta-edge)
-                          (subvec 0 2))
+          (let [edge (graph/edge context delta-edge)
+                v (graph/src edge)
+                w (graph/dest edge)
 
                 [v w] (cond-> [v w]
                         (label/unlabeled? context
-                                             (blossom/in-blossom context v))
+                                          (blossom/in-blossom context v))
                         (-> reverse vec))]
             (assert (label/labeled-s-blossom? context
                                               (blossom/in-blossom context v)))
@@ -748,21 +757,35 @@
 
       (= delta-type 4)
       ;; Expand the least-z blossom.
-      (expand-blossom delta-blossom false))))
+      (expand-blossom delta-blossom false)))
+
+  (mate-endps-to-vertices
+    [context]
+    (map #(let [mate-v (mate/mate context %)]
+            (if (endp/some-endp? mate-v)
+              (endp/vertex context mate-v)
+              c/NO-NODE))
+         (blossom/vertex-range context)))
+
+  (valid-matching? [context matching]
+    (every? (fn [v]
+              (let [mate-v (nth matching v)]
+                (or (graph/no-node? mate-v)
+                    (= v (get matching mate-v)))))
+            (blossom/vertex-range context))))
 
 (defn initialize-context [edges options]
-  (let [{:keys [nvertex nedge] :as g} (graph/initialize edges)
-        max-weight (graph/max-weight g)]
+  (let [{:keys [nvertex nedge max-weight] :as g} (graph/initialize edges)]
     (ctx/map->Context (merge g
-                             {:mate (vec (repeat nvertex graph/NO-NODE))
-                              :label (vec (repeat (* 2 nvertex) label/FREE))
-                              :label-end (vec (repeat (* 2 nvertex) graph/NO-NODE))
+                             {:mate (vec (repeat nvertex c/NO-ENDP))
+                              :label (vec (repeat (* 2 nvertex) c/FREE))
+                              :label-end (vec (repeat (* 2 nvertex) c/NO-ENDP))
                               :in-blossom (vec (range nvertex))
-                              :blossom-parent (vec (repeat (* 2 nvertex) graph/NO-NODE))
+                              :blossom-parent (vec (repeat (* 2 nvertex) c/NO-NODE))
                               :blossom-childs (vec (repeat (* 2 nvertex) []))
-                              :blossom-base (vec (concat (range nvertex) (repeat nvertex graph/NO-NODE)))
+                              :blossom-base (vec (concat (range nvertex) (repeat nvertex c/NO-NODE)))
                               :blossom-endps (vec (repeat (* 2 nvertex) []))
-                              :best-edge (vec (repeat (* 2 nvertex) graph/NO-EDGE))
+                              :best-edge (vec (repeat (* 2 nvertex) c/NO-EDGE))
                               :blossom-best-edges (sorted-map)
                               :unused-blossoms (vec (range nvertex (* 2 nvertex)))
                               :dual-var (vec (concat (repeat nvertex max-weight) (repeat nvertex 0)))
@@ -837,22 +860,14 @@
             ;; Stop when no more augmenting path can be found.
             (let [verify (when (options/get-option context :check-optimum)
                            (verify-optimum context))
-                  ;; Transform mate[] such that mate[v] is the vertex to which v is paired.
-                  context (reduce (fn [context v]
-                                    (let [mate-v (mate/mate context v)]
-                                      (cond-> context
-                                        (graph/some-node? mate-v)
-                                        (mate/mate-assoc v (graph/endpoint context mate-v)))))
-                                  context
-                                  (blossom/vertex-range context))]
+                  result (mate-endps-to-vertices context)]
 
               ;; Paranoia check that the matching is symmetric.
-              (doseq [v (blossom/vertex-range context)
-                      :let [mate-v (mate/mate context v)]]
-                (assert (or (graph/no-node? mate-v)
-                            (= v (mate/mate context mate-v)))))
+              ;; FIXME ugly
+              (assert (valid-matching? context (vec result)))
+
               {:context context
-               :result (:mate context)
+               :result result
                :verify verify})
             ;; End of a stage; expand all S-blossoms which have zero dual.
             (recur (expand-tight-sblossoms context))))))))

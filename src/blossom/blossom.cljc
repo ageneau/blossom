@@ -1,5 +1,6 @@
 (ns blossom.blossom
-  (:require [blossom.context :as ctx]
+  (:require [blossom.constants :as c]
+            [blossom.context :as ctx]
             [blossom.graph :as graph]
             [blossom.utils :as utils]))
 
@@ -48,7 +49,7 @@
     (update this :blossom-parent assoc b1 b2))
 
   (blossom-parent-clear [this b]
-    (blossom-parent-assoc this b graph/NO-NODE))
+    (blossom-parent-assoc this b c/NO-NODE))
 
   (blossom-parent [this b]
     (nth (:blossom-parent this) b))
@@ -72,7 +73,7 @@
     (update this :blossom-base assoc b v))
 
   (blossom-base-clear [this b]
-    (blossom-base-assoc this b graph/NO-NODE))
+    (blossom-base-assoc this b c/NO-NODE))
 
   (blossom-base [this b]
     (nth (:blossom-base this) b))

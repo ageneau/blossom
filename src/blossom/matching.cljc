@@ -1,6 +1,6 @@
 (ns blossom.matching
   (:require [clojure.spec.alpha :as s]
-            [blossom.graph :as graph]
+            [blossom.endpoint :as endp]
             [loom.graph :as lg]))
 
 (defn maximal-matching
@@ -138,8 +138,8 @@
 (defn matching-to-set [matching]
   (reduce (fn [result [a b]]
             (cond-> result
-              (and (graph/some-node? a)
-                   (graph/some-node? b))
+              (and (endp/some-endp? a)
+                   (endp/some-endp? b))
               (conj #{a b})))
           #{}
           (map-indexed vector matching)))

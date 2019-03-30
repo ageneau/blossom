@@ -1,5 +1,6 @@
 (ns blossom.dual
-  (:require [blossom.context :as ctx]
+  (:require [blossom.constants :as c]
+            [blossom.context :as ctx]
             [blossom.graph :as graph]))
 
 (defprotocol PDualProblem
@@ -31,10 +32,10 @@
     (nth (:best-edge this) b))
 
   (best-edge-clear [this b]
-    (best-edge-assoc this b graph/NO-EDGE))
+    (best-edge-assoc this b c/NO-EDGE))
 
   (best-edge-clear-all [this]
-    (assoc this :best-edge (vec (repeat (* 2 (:nvertex this)) graph/NO-EDGE))))
+    (assoc this :best-edge (vec (repeat (* 2 (:nvertex this)) c/NO-EDGE))))
 
   (blossom-best-edges-assoc [this b edge-list]
     (update this :blossom-best-edges assoc b edge-list))
@@ -62,11 +63,11 @@
 
   (slack
     [this k]
-    (let [[i j wt] (graph/edges this k)
+    (let [edge (graph/edge this k)
           coerce (if (:integer-weights? this) int double)]
-      (+ (coerce (dual-var this i))
-         (coerce (dual-var this j))
-         (- (* 2 (coerce wt))))))
+      (+ (coerce (dual-var this (graph/src edge)))
+         (coerce (dual-var this (graph/dest edge)))
+         (- (* 2 (coerce (graph/weight edge)))))))
 
   (allow-edge-clear [this]
     (assoc this :allow-edge (vec (repeat (:nedge this) false)))))
