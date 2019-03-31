@@ -1,5 +1,5 @@
 diff --git a/python/mwmatching.py b/python/mwmatching.py
-index d01667e..ee14ebf 100644
+index d01667e..878b780 100644
 --- a/python/mwmatching.py
 +++ b/python/mwmatching.py
 @@ -23,13 +23,80 @@ to validate this new code.
@@ -58,7 +58,7 @@ index d01667e..ee14ebf 100644
 +    global log
 +    if EXPORT_LOGS:
 +        with open(fn, 'w') as outfile:
-+            json.dump(log, outfile)
++            json.dump(log, outfile, sort_keys=True, indent=2)
 +        if clear_after:
 +            log = []
 +
