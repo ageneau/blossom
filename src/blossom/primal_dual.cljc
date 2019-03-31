@@ -36,7 +36,7 @@
     (or (dual/blossom-best-edges context bv)
         ;; This subblossom does not have a list of least-slack edges;
         ;; get the information from the vertices.
-        (for [v (blossom/blossom-leaves context bv)
+        (for [v (blossom/leaves context bv)
               p (endp/vertex-endpoints context v)]
           (endp/edge context p))))
 
@@ -53,7 +53,7 @@
                        {:keys [edge-bj slack-bj]} (get best-edge-to bj)]
                    (cond-> best-edge-to
                      (and (not= bj b)
-                          (label/labeled-s-blossom? context bj)
+                          (label/s-blossom? context bj)
                           (or (nil? slack-bj)
                               (< (dual/slack context k)
                                  slack-bj)))
@@ -62,7 +62,7 @@
                best-edge-to
                (get-least-slack-edges context bv)))
      (sorted-map)
-     (blossom/blossom-childs context b)))
+     (blossom/childs context b)))
 
   (update-dual-var-with-delta
     [context delta]
@@ -72,11 +72,11 @@
         (let [v (first gnodes)
               bv (blossom/in-blossom context v)]
           (recur (cond-> context
-                   (label/labeled-s-blossom? context bv)
+                   (label/s-blossom? context bv)
                    ;; S-vertex: 2*u = 2*u - 2*delta
                    (update-in [:dual-var v] - delta)
 
-                   (label/labeled-t-blossom? context bv)
+                   (label/t-blossom? context bv)
                    ;; T-vertex: 2*u = 2*u + 2*delta
                    (update-in [:dual-var v] + delta))
                  (next gnodes)))
@@ -86,18 +86,18 @@
     [context delta]
     (reduce
      (fn [context b]
-       (let [base-b (blossom/blossom-base context b)
-             parent-b (blossom/blossom-parent context b)]
+       (let [base-b (blossom/base context b)
+             parent-b (blossom/parent context b)]
          (cond-> context
            (and (graph/some-node? base-b)
                 (graph/no-node? parent-b)
-                (label/labeled-s-blossom? context b))
+                (label/s-blossom? context b))
            ;; top-level S-blossom: z = z + 2*delta
            (update-in [:dual-var b] + delta)
 
            (and (graph/some-node? base-b)
                 (graph/no-node? parent-b)
-                (label/labeled-t-blossom? context b))
+                (label/t-blossom? context b))
            ;; top-level T-blossom: z = z - 2*delta
            (update-in [:dual-var b] - delta))))
      context
@@ -126,10 +126,10 @@
     [context]
     (->> (range (* 2 (:nvertex context)))
          (map (fn [b]
-                (let [parent-b (blossom/blossom-parent context b)
+                (let [parent-b (blossom/parent context b)
                       best-edge-b (dual/best-edge context b)]
                   (when (and (graph/no-node? parent-b)
-                             (label/labeled-s-blossom? context b)
+                             (label/s-blossom? context b)
                              (graph/some-edge? best-edge-b))
                     {:delta-edge best-edge-b
                      :delta (/ (dual/slack context best-edge-b) 2)}))))
@@ -139,12 +139,12 @@
     [context]
     (->> (blossom/blossom-range context)
          (map (fn [b]
-                (let [base-b (blossom/blossom-base context b)
-                      parent-b (blossom/blossom-parent context b)
+                (let [base-b (blossom/base context b)
+                      parent-b (blossom/parent context b)
                       dual-var-b (dual/dual-var context b)]
                   (when (and (graph/some-node? base-b)
                              (graph/no-node? parent-b)
-                             (label/labeled-t-blossom? context b))
+                             (label/t-blossom? context b))
                     {:delta dual-var-b
                      :delta-blossom b}))))
          (utils/filter-and-find-min-for-key :delta)))
@@ -155,7 +155,7 @@
                                 (dual/blossom-best-edges-clear bv)
                                 (dual/best-edge-clear bv)))
                           context
-                          (blossom/blossom-childs context b))
+                          (blossom/childs context b))
           best-edges-and-slack (compute-my-best-edges context b)
           best-edges (vec (map :edge (vals best-edges-and-slack)))
 
@@ -164,8 +164,8 @@
                          (:edge (reduce (partial min-key :slack)
                                         (reverse (vals best-edges-and-slack)))))]
       (-> context
-          (dual/best-edge-assoc b my-best-edge)
-          (dual/blossom-best-edges-assoc b best-edges))))
+          (dual/set-best-edge b my-best-edge)
+          (dual/set-blossom-best-edges b best-edges))))
 
   (compute-delta
     [context]

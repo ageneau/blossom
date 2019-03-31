@@ -59,21 +59,21 @@
                     #'blossom.dual/best-edge-clear
 
                     #'blossom.blossom/in-blossom
-                    #'blossom.blossom/blossom-parent
-                    #'blossom.blossom/blossom-childs
-                    #'blossom.blossom/blossom-base
-                    #'blossom.blossom/blossom-endps
-                    #'blossom.blossom/blossom-leaves
+                    #'blossom.blossom/parent
+                    #'blossom.blossom/childs
+                    #'blossom.blossom/base
+                    #'blossom.blossom/endps
+                    #'blossom.blossom/leaves
                     #'blossom.blossom/trivial-blossom?
 
                     #'blossom.mate/mate
-                    #'blossom.mate/mate-assoc
+                    #'blossom.mate/set-mate
 
-                    #'blossom.label/labeled-s-blossom?
-                    #'blossom.label/labeled-t-blossom?
+                    #'blossom.label/s-blossom?
+                    #'blossom.label/t-blossom?
                     #'blossom.label/unlabeled?
                     #'blossom.label/labeled?
-                    #'blossom.label/label-endp-assoc
+                    #'blossom.label/set-endp
                     #'blossom.label/add-label
                     
                     #'blossom.graph/initialize

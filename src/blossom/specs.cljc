@@ -162,12 +162,12 @@
                                          :context/options]))
 
 ;; blossom.blossom NS
-(s/fdef blossom.blossom/blossom-leaves
+(s/fdef blossom.blossom/leaves
   :args (s/cat :context :context/context
                :node :node/blossom)
   :ret (s/coll-of :graph/vertex))
 
-(s/fdef blossom.blossom/blossom-rotate-childs
+(s/fdef blossom.blossom/rotate-childs
   :args (s/cat :context :context/context
                :b :node/blossom
                :i int?)
@@ -178,18 +178,18 @@
                :b :node/blossom)
   :ret boolean?)
 
-(s/fdef blossom.blossom/blossom-base-assoc
+(s/fdef blossom.blossom/set-base
   :args (s/cat :context :context/context
                :b :node/blossom
                :v :graph/vertex)
   :ret :context/context)
 
-(s/fdef blossom.blossom/blossom-base
+(s/fdef blossom.blossom/base
   :args (s/cat :context :context/context
                :b :node/blossom)
   :ret :graph/vertex)
 
-(s/fdef blossom.blossom/in-blossom-assoc
+(s/fdef blossom.blossom/set-in-blossom
   :args (s/cat :context :context/context
                :v :graph/vertex
                :b :node/blossom)
@@ -200,13 +200,13 @@
                :v :graph/vertex)
   :ret :node/blossom)
 
-(s/fdef blossom.blossom/blossom-parent-assoc
+(s/fdef blossom.blossom/set-parent
   :args (s/cat :context :context/context
                :r1 :node/blossom
                :r2 (s/nilable :node/blossom))
   :ret :context/context)
 
-(s/fdef blossom.blossom/blossom-parent
+(s/fdef blossom.blossom/parent
   :args (s/cat :context :context/context
                :b :node/blossom)
   :ret (s/nilable :node/blossom))
@@ -223,7 +223,7 @@
                :b :node/blossom)
   :ret :node/label)
 
-(s/fdef blossom.label/label-endp-assoc
+(s/fdef blossom.label/set-endp
   :args (s/cat :context :context/context
                :b :node/blossom
                :endpoint (s/nilable :graph/vertex))
@@ -235,7 +235,7 @@
                :b :node/blossom)
   :ret (s/nilable :edge/edge))
 
-(s/fdef blossom.dual/best-edge-assoc
+(s/fdef blossom.dual/set-best-edge
   :args (s/cat :context :context/context
                :b :node/blossom
                :edge (s/nilable :edge/edge))
@@ -251,7 +251,7 @@
                :edge :edge/edge)
   :ret :context/context)
 
-(s/fdef blossom.dual/dual-var-assoc
+(s/fdef blossom.dual/set-dual-var
   :args (s/cat :context :context/context
                :v :graph/vertex
                :x :edge/weight)
@@ -271,7 +271,7 @@
   :ret :edge/weight)
 
 ;; blossom.mate NS
-(s/fdef blossom.mate/mate-assoc
+(s/fdef blossom.mate/set-mate
   :args (s/cat :context :context/context
                :v1 :graph/vertex
                :v2 :graph/vertex)

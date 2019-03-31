@@ -14,13 +14,13 @@
 
   (unlabeled? [graph node])
   (labeled? [graph node])
-  (labeled-s-blossom? [graph node])
-  (labeled-t-blossom? [graph node])
-  (labeled-breadcrumb? [graph node])
+  (s-blossom? [graph node])
+  (t-blossom? [graph node])
+  (breadcrumb? [graph node])
 
-  (label-endp-assoc [graph node endpoint])
-  (label-endp-clear [graph node])
-  (label-endp [graph node]))
+  (set-endp [graph node endpoint])
+  (remove-endp [graph node])
+  (endp [graph node]))
 
 (extend-type blossom.context.Context
   PLabelable
@@ -37,20 +37,20 @@
     (= c/FREE (label this v)))
   (labeled? [this v]
     (not= c/FREE (label this v)))
-  (labeled-s-blossom? [this v]
+  (s-blossom? [this v]
     (= c/S-BLOSSOM (label this v)))
-  (labeled-t-blossom? [this v]
+  (t-blossom? [this v]
     (= c/T-BLOSSOM (label this v)))
-  (labeled-breadcrumb? [this v]
+  (breadcrumb? [this v]
     (= c/BREADCRUMB (label this v)))
 
-  (label-endp-assoc [this b endpoint]
+  (set-endp [this b endpoint]
     (update this :label-end assoc b endpoint))
 
-  (label-endp-clear [this b]
-    (label-endp-assoc this b c/NO-ENDP))
+  (remove-endp [this b]
+    (set-endp this b c/NO-ENDP))
 
-  (label-endp [this b]
+  (endp [this b]
     (nth (:label-end this) b))
 
   (remove-all-labels [this]
