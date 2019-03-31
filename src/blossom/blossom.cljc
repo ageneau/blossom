@@ -8,11 +8,13 @@
   (set-in-blossom [this v b])
   (in-blossom [this v])
 
-  (set-parent [this b1 b2])
+  (set-parent [this child parent])
   (remove-parent [this b])
   (parent [this b])
 
   (childs [this b])
+  (child [this b n]
+    "Get child for blossom b at index n, wrapping negative indices if necessary.")
   (childs-find [this b t])
   (childs-count [this b])
   (set-childs [this b childs])
@@ -25,6 +27,8 @@
   (set-endps [this b node-list])
   (endps-clear [this b])
   (endps [this b])
+  (endpoint [this b n]
+    "Get endpoint for blossom b at index n, wrapping negative indices if necessary.")
 
   (unused-add [this b])
   (unused-peek [this])
@@ -45,8 +49,8 @@
   (in-blossom [this v]
     (nth (:in-blossom this) v))
 
-  (set-parent [this b1 b2]
-    (update this :blossom-parent assoc b1 b2))
+  (set-parent [this child parent]
+    (update this :blossom-parent assoc child parent))
 
   (remove-parent [this b]
     (set-parent this b c/NO-NODE))
@@ -56,6 +60,9 @@
 
   (childs [this b]
     (nth (:blossom-childs this) b))
+
+  (child [this b n]
+    (utils/wget (childs this b) n))
 
   (childs-find [this b t]
     (first (utils/positions #{t} (childs this b))))
@@ -86,6 +93,9 @@
 
   (endps [this b]
     (nth (:blossom-endps this) b))
+
+  (endpoint [this b n]
+    (utils/wget (endps this b) n))
 
   (unused-add [this b]
     (update this :unused-blossoms conj b))

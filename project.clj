@@ -18,6 +18,7 @@
                              [com.bhauman/figwheel-main "0.2.0"]
                              [com.bhauman/rebel-readline-cljs "0.1.4"]
                              [com.taoensso/tufte "2.0.1"]
+                             [criterium "0.4.4"]
                              [org.clojure/math.combinatorics "0.1.4"]]
               :plugins      [[lein-doo "0.1.11"]]
               :global-vars {;; *warn-on-reflection* true
@@ -26,8 +27,10 @@
               :resource-paths ["test/resources"]}
              :bench
              {:main blossom.bench/-main
-              :dependencies [[com.taoensso/tufte "2.0.1"]]
+              :dependencies [[com.taoensso/tufte "2.0.1"]
+                             [criterium "0.4.4"]]
               :source-paths ["src" "test"]
+              :resource-paths ["test/resources"]
               :global-vars {*warn-on-reflection* true
                             *unchecked-math* :warn-on-boxed
                             *assert* true}}}

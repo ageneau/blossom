@@ -1,6 +1,7 @@
 (ns blossom.label
-  (:require [blossom.constants :as c]
-            [blossom.graph :as graph]))
+  (:require [blossom.context]
+            [blossom.constants :as c]
+            [blossom.endpoint :as endpoint]))
 
 (defprotocol PLabelable
   (add-label [graph node label]
@@ -20,7 +21,9 @@
 
   (set-endp [graph node endpoint])
   (remove-endp [graph node])
-  (endp [graph node]))
+  (endp [graph node])
+  (some-endp? [graph node])
+  (no-endp? [graph node]))
 
 (extend-type blossom.context.Context
   PLabelable
@@ -52,6 +55,12 @@
 
   (endp [this b]
     (nth (:label-end this) b))
+
+  (some-endp? [graph node]
+    (endpoint/some-endp? (endp graph node)))
+
+  (no-endp? [graph node]
+    (endpoint/no-endp? (endp graph node)))
 
   (remove-all-labels [this]
     (assoc this :label (vec (repeat (* 2 (:nvertex this)) c/FREE)))))

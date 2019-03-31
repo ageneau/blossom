@@ -36,3 +36,11 @@
   (let [filtered (filter some? s)]
     (when (seq filtered)
       (reduce (partial min-key key) (reverse filtered)))))
+
+(defn doto-assert
+  "Apply f to x and call `clojure.core/assert` on the result. Return x.
+  Useful as an assertion method within -> threads"
+  ([x f]
+   (do (assert (f x)) x))
+  ([x f message]
+   (do x (assert (f x) message) x)))

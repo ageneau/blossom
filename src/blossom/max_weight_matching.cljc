@@ -106,9 +106,7 @@
           (dual/best-edge-clear b)
           (cond->
             (= c/S-BLOSSOM t)
-            (queue/queue-push (if-not (blossom/trivial-blossom? ctx b)
-                                (blossom/leaves ctx b)
-                                [b]))
+            (queue/queue-push (blossom/leaves ctx b))
 
             (= c/T-BLOSSOM t)
             (assign-label (endp/vertex ctx (mate/mate ctx base))
@@ -136,14 +134,14 @@
                   ;; Trace one step back.
                   _ (assert (= (label/endp ctx b)
                                (mate/mate ctx (blossom/base ctx b))))
-                  v (if (endp/no-endp? (label/endp ctx b))
+                  v (if (label/no-endp? ctx b)
                       ;; The base of blossom b is single; stop tracing this path.
                       c/NO-NODE
                       (let [v (endp/vertex ctx (label/endp ctx b))
                             b (blossom/in-blossom ctx v)]
                         (assert (label/t-blossom? ctx b))
                         ;; b is a T-blossom; trace one more step back.
-                        (assert (endp/some-endp? (label/endp ctx b)))
+                        (assert (label/some-endp? ctx b))
                         (endp/vertex ctx (label/endp ctx b))))]
               ;; Swap v and w so that we alternate between both paths.
               (if (graph/some-node? w)
@@ -162,7 +160,7 @@
                         (and (label/s-blossom? ctx bv)
                              (= (label/endp ctx bv)
                                 (mate/mate ctx (blossom/base ctx bv))))))
-            (assert (endp/some-endp? (label/endp ctx bv)))
+            (assert (label/some-endp? ctx bv))
             (recur (endp/vertex ctx (label/endp ctx bv))
                    (conj path bv)))))))
 
@@ -191,12 +189,11 @@
           ;; Join paths, add endpoint that connects the pair of S vertices.
           path (concat [bb] (reverse path1) path2)
           endps (concat (->> path1
-                             (map (fn [bv]
-                                    (label/endp ctx bv)))
+                             (map (partial label/endp ctx))
                              reverse)
                         [(* 2 k)]
-                        (map (fn [bv]
-                               (endp/opposite ctx (label/endp ctx bv)))
+                        (map (comp (partial endp/opposite ctx)
+                                   (partial label/endp ctx))
                              path2))
 
           ctx (reduce (fn [ctx bv]
@@ -207,11 +204,9 @@
 
           ctx (-> ctx
                   (blossom/set-childs b path)
-                  (blossom/set-endps b endps))
-
-          ;; Set label to S.
-          _ (assert (label/s-blossom? ctx bb))
-          ctx (-> ctx
+                  (blossom/set-endps b endps)
+                  (utils/doto-assert #(label/s-blossom? % bb))
+                  ;; Set label to S.
                   (label/add-label b c/S-BLOSSOM)
                   (label/set-endp b (label/endp ctx bb))
                   ;; Set dual variable to zero.
@@ -260,7 +255,7 @@
 
   (move-to-base-relabeling
     [ctx b]
-    (let [_ (assert (endp/some-endp? (label/endp ctx b)))
+    (let [_ (assert (label/some-endp? ctx b))
           entry-child (entry-child ctx b)
           [j jstep endptrick] (blossom-loop-direction ctx b entry-child)]
       ;; Move along the blossom until we get to the base.
@@ -271,7 +266,7 @@
           ;; Relabel the base T-sub-blossom WITHOUT stepping through to
           ;; its mate (so don't call assignLabel).
           (relabel-base-t-subblossom ctx b p)
-          (let [endp (utils/wget (blossom/endps ctx b) (- j endptrick))
+          (let [endp (blossom/endpoint ctx b (- j endptrick))
                 ctx (-> ctx
                         ;; Relabel the T-sub-blossom.
                         (label/remove-label (endp/opposite-vertex ctx p))
@@ -280,7 +275,7 @@
                         (dual/set-allow-edge (endp/edge ctx endp) true))
                 ;; Step to the next S-sub-blossom and note its forward endpoint.
                 j (+ j jstep)
-                p (bit-xor (utils/wget (blossom/endps ctx b) (- j endptrick)) endptrick)
+                p (bit-xor (blossom/endpoint ctx b (- j endptrick)) endptrick)
                 ctx (dual/set-allow-edge ctx (endp/edge ctx p) true)]
             ;; Step to the next T-sub-blossom.
             (recur (+ j jstep) p ctx))))))
@@ -297,7 +292,7 @@
     ;; we reach the base.
     ;; Figure out through which sub-blossom the expanding blossom
     ;; obtained its label initially.
-    (let [_ (assert (endp/some-endp? (label/endp ctx b)))
+    (let [_ (assert (label/some-endp? ctx b))
           entry-child (entry-child ctx b)
           [_ jstep endptrick] (blossom-loop-direction ctx b entry-child)
           j jstep]
@@ -306,7 +301,7 @@
         ;; Examine the vertices of the sub-blossom to see whether
         ;; it is reachable from a neighbouring S-vertex outside the
         ;; expanding blossom.
-        (let [bv (utils/wget (blossom/childs ctx b) j)
+        (let [bv (blossom/child ctx b j)
               v (first-labeled-blossom-leaf ctx bv)]
           (if (= bv entry-child)
             ctx
@@ -339,9 +334,9 @@
         (blossom/childs-clear b)
         (blossom/endps-clear b)
         (blossom/base-clear b)
+        (blossom/unused-add b)
         (dual/blossom-best-edges-clear b)
-        (dual/best-edge-clear b)
-        (blossom/unused-add b)))
+        (dual/best-edge-clear b)))
 
   (expand-blossom
     [ctx b endstage]
@@ -357,8 +352,9 @@
           ;; we reach the base.
           ;; Figure out through which sub-blossom the expanding blossom
           ;; obtained its label initially.
-          (-> (move-to-base-relabeling b) ; Move along the blossom until we get to the base.
-              
+
+          ;; Move along the blossom until we get to the base.
+          (-> (move-to-base-relabeling b)
               ;; Continue along the blossom until we get back to entrychild.
               (move-back-to-entry-child-relabeling b)))
 
@@ -370,12 +366,12 @@
       ;; Bubble up through the blossom tree from vertex v to an immediate
       ;; sub-blossom of b.
       (let [parent (blossom/parent ctx t)]
-        (if-not (= b parent)
-          (recur parent)
-          t))))
+        (if (= b parent)
+          t
+          (recur parent)))))
 
   (augment-blossom-step [ctx b j x]
-    (let [t (utils/wget (blossom/childs ctx b) j)]
+    (let [t (blossom/child ctx b j)]
       (cond-> ctx
         (not (blossom/trivial-blossom? ctx t))
         (augment-blossom t x))))
@@ -388,6 +384,7 @@
 
   (augment-blossom
     [ctx b v]
+    {:post [(= (blossom/base % b) v)]}
     (let [t (immediate-subblossom-of ctx v b)
           ctx (cond-> ctx
                 (not (blossom/trivial-blossom? ctx t))
@@ -395,33 +392,28 @@
                 (augment-blossom t v))
 
           [j jstep endptrick] (blossom-loop-direction ctx b t)
-          entry-child-index j
+          entry-child-index j]
+      ;; Move along the blossom until we get to the base.
+      (loop [j j
+             t t
+             ctx ctx]
+        (if (zero? j)
+          (blossom/rotate-childs ctx b entry-child-index)
+          (let [;; Step to the next sub-blossom and augment it recursively.
+                j (+ j jstep)
+                p (bit-xor (blossom/endpoint ctx b (- j endptrick)) endptrick)
+                x (endp/vertex ctx p)
 
-          ;; Move along the blossom until we get to the base.
-          ctx (loop [j j
-                     t t
-                     ctx ctx]
-                (if (zero? j)
-                  ctx
-                  (let [;; Step to the next sub-blossom and augment it recursively.
-                        j (+ j jstep)
-                        p (bit-xor (utils/wget (blossom/endps ctx b) (- j endptrick))
-                                   endptrick)
-                        x (endp/vertex ctx p)
+                ctx (augment-blossom-step ctx b j x)
 
-                        ctx (augment-blossom-step ctx b j x)
+                x (endp/opposite-vertex ctx p)
+                ;; Step to the next sub-blossom and augment it recursively.
+                j (+ j jstep)
+                ctx (augment-blossom-step ctx b j x)
 
-                        x (endp/opposite-vertex ctx p)
-                        ;; Step to the next sub-blossom and augment it recursively.
-                        j (+ j jstep)
-                        ctx (augment-blossom-step ctx b j x)
-
-                        ;; Match the edge connecting those sub-blossoms.
-                        ctx (match-endpoint ctx p)]
-                    (recur j t ctx))))
-          ctx (blossom/rotate-childs ctx b entry-child-index)]
-      (assert (= (blossom/base ctx b) v))
-      ctx))
+                ;; Match the edge connecting those sub-blossoms.
+                ctx (match-endpoint ctx p)]
+            (recur j t ctx))))))
 
   (augment-matching
     [ctx k]
@@ -447,7 +439,7 @@
                     ;; Update mate[s]
                     (mate/set-mate s p))]
           ;; Trace one step back.
-          (if (endp/no-endp? (label/endp ctx bs))
+          (if (label/no-endp? ctx bs)
             ;; Reached single vertex; try with [s p] = [w 2*k] or stop.
             (if-not permuted
               (recur ctx true w (* 2 k))
@@ -744,15 +736,10 @@
       (some #{delta-type} [2 3])
       (as-> ctx
           (let [edge (graph/edge ctx delta-edge)
-                v (graph/src edge)
-                w (graph/dest edge)
-
-                [v w] (cond-> [v w]
-                        (label/unlabeled? ctx
-                                          (blossom/in-blossom ctx v))
-                        (-> reverse vec))]
-            (assert (label/s-blossom? ctx
-                                      (blossom/in-blossom ctx v)))
+                v (if (label/unlabeled? ctx (blossom/in-blossom ctx (graph/src edge)))
+                    (graph/dest edge)
+                    (graph/src edge))]
+            (assert (label/s-blossom? ctx (blossom/in-blossom ctx v)))
             ;; Use the least-slack edge to continue the search.
             (-> ctx
                 (dual/set-allow-edge delta-edge true)
@@ -764,6 +751,7 @@
 
   (mate-endps-to-vertices
     [ctx]
+    {:post [(valid-matching? ctx %)]}
     (->> (blossom/vertex-range ctx)
          (map #(let [mate-v (mate/mate ctx %)]
                  (if (endp/some-endp? mate-v)
@@ -863,14 +851,10 @@
 
           (if-not augmented
             ;; Stop when no more augmenting path can be found.
-            (let [result (mate-endps-to-vertices ctx)]
-              ;; Paranoia check that the matching is symmetric.
-              (assert (valid-matching? ctx result))
-
-              (cond-> {:result result
-                       :context ctx}
-                check-optimum
-                (assoc :verify (verify-optimum ctx))))
+            (cond-> {:result (mate-endps-to-vertices ctx)
+                     :context ctx}
+              check-optimum
+              (assoc :verify (verify-optimum ctx)))
             ;; End of a stage; expand all S-blossoms which have zero dual.
             (recur (expand-tight-sblossoms ctx))))))))
 

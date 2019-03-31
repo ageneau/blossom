@@ -2,6 +2,7 @@
   (:require [blossom.max-weight-matching :as mwm]
             [blossom.context :as ctx]
             [blossom.dual :as dual]
+            [criterium.core :as crit]
             [taoensso.tufte :as tufte :refer (defnp profiled profile)]
             [blossom.test-utils :as utils :refer [elapsed-time]])
   (:gen-class))
@@ -22,6 +23,12 @@
   (let [edges (complete-graph n)
         {:keys [time value]} (elapsed-time (doall (mwm/max-weight-matching  edges {:max-cardinality true})))]
     (println (format "%5d %f" n (/ time 1000)))))
+
+(defn test-lg1 []
+  (let [edges (->> "large_graph1.json"
+                   utils/read-resource
+                   utils/parse-json)]
+    (mwm/max-weight-matching edges)))
 
 (defn dotest [graph-nodes]
   (utils/doprofile [#'test-graph
@@ -91,16 +98,26 @@
 (defn -main
   "Simple benchmark"
   [& args]
-  (cond (and (seq args)
-             (= "short" (first args)))
-        (test-graph (or (Integer/parseInt (second args)) 100))
+  (cond (and (seq args) (= "short" (first args)))
+        (test-graph (if (= 2 (count args))
+                      (Integer/parseInt (second args))
+                      100))
 
-        (and (seq args)
-             (= "profile" (first args)))
+        (and (seq args) (= "criterium" (first args)))
+        (crit/quick-bench (test-graph (if (= 2 (count args))
+                                        (Integer/parseInt (second args))
+                                        100)))
+
+        (and (seq args) (= "lg1" (first args)))
+        (crit/quick-bench (test-lg1))
+        
+        (and (seq args) (= "profile" (first args)))
         (println (str "\n"
                       (tufte/format-pstats
                        (second
-                        (dotest (or (Integer/parseInt (second args)) 100))))))
+                        (dotest (if (= 2 (count args))
+                                  (Integer/parseInt (second args))
+                                  100))))))
 
         :else (doseq [n (range MIN-SIZE (inc MAX-SIZE))]
                 (test-graph n))))
