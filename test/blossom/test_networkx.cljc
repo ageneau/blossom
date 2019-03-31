@@ -56,9 +56,10 @@
                      })
 
 (def ALL-RESULTS (->> TEST-NAMES
+                      (map test-file)
+                      (filter some?)
                       (map (fn [file]
                              (->> file
-                                  test-file
                                   networkx/read-log
                                   (map (fn [[id call-log]]
                                          [id (assoc call-log :file file)]))

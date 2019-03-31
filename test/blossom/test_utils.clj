@@ -7,4 +7,5 @@
   (json/read-str file))
 
 (defn read-resource [fn]
-  (slurp (io/resource fn)))
+  (when-some [resource (io/resource fn)]
+    (slurp resource)))
