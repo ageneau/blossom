@@ -384,7 +384,6 @@
 
   (augment-blossom
     [ctx b v]
-    {:post [(= (blossom/base % b) v)]}
     (let [t (immediate-subblossom-of ctx v b)
           ctx (cond-> ctx
                 (not (blossom/trivial-blossom? ctx t))
@@ -398,7 +397,11 @@
              t t
              ctx ctx]
         (if (zero? j)
-          (blossom/rotate-childs ctx b entry-child-index)
+          (-> ctx
+              (blossom/rotate-childs b entry-child-index)
+              ;; FIXME: This should go in the post condition but this breaks CLJS
+              ;; for some reason
+              (utils/doto-assert #(= (blossom/base % b) v)))
           (let [;; Step to the next sub-blossom and augment it recursively.
                 j (+ j jstep)
                 p (bit-xor (blossom/endpoint ctx b (- j endptrick)) endptrick)
