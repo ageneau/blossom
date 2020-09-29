@@ -1,6 +1,5 @@
 (ns blossom.dual
   (:require [blossom.constants :as c]
-            [blossom.context :as ctx]
             [blossom.graph :as graph]))
 
 (defprotocol PDualProblem

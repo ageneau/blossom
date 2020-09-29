@@ -19,8 +19,9 @@
 (defn test-resource-dir []
   (str (cwd) "/test/resources"))
 
-(defn remove-extension [fn]
+(defn remove-extension
   "Removes the file extension from a file name"
+  [fn]
   (string/replace fn #"\.[^.]*$" ""))
 
 (defn parse-json [s]

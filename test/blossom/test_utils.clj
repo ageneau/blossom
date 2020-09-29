@@ -1,6 +1,5 @@
 (ns blossom.test-utils
-  (:require [blossom.utils :as sut]
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
             [clojure.java.io :as io]
             [taoensso.tufte :as tufte]))
 

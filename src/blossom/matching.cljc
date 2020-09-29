@@ -25,7 +25,7 @@
   [g]
   (as-> {:matching #{}
          :nodes #{}} result
-    (reduce (fn [{:keys [matching nodes] :as result} [u v :as edge]]
+    (reduce (fn [{:keys [nodes] :as result} [u v]]
               (cond-> result
                 (and (not= u v)
                      (not (contains? nodes u))

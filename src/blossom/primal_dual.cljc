@@ -46,11 +46,11 @@
      (fn [best-edge-to bv]
        (reduce (fn [best-edge-to k]
                  (let [edge (graph/edge context k)
-                       [i j] (if (= b (blossom/in-blossom context (graph/dest edge)))
-                               [(graph/dest edge) (graph/src edge)]
-                               [(graph/src edge) (graph/dest edge)])
+                       j (if (= b (blossom/in-blossom context (graph/dest edge)))
+                           (graph/src edge)
+                           (graph/dest edge))
                        bj (blossom/in-blossom context j)
-                       {:keys [edge-bj slack-bj]} (get best-edge-to bj)]
+                       {:keys [slack-bj]} (get best-edge-to bj)]
                    (cond-> best-edge-to
                      (and (not= bj b)
                           (label/s-blossom? context bj)

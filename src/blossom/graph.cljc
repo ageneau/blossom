@@ -66,7 +66,7 @@
   (s/valid? (s/coll-of int?) (map last edges)))
 
 (defn compute-endpoint [edges]
-  (vec (mapcat (fn [[i j wt]]
+  (vec (mapcat (fn [[i j _]]
                  [i j])
                edges)))
 

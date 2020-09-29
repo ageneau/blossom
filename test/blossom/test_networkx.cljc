@@ -76,7 +76,7 @@
 (defn clojure-function [fname-kw]
   (get-in TEST-FUNCTIONS [fname-kw :func]))
 
-(defmulti test-function-args (fn [atest extra-args] (get-func-name atest)))
+(defmulti test-function-args (fn [atest _] (get-func-name atest)))
 
 (defmethod test-function-args :default
   [atest extra-args]
@@ -93,8 +93,7 @@
     [edges (merge opts extra-args)]))
 
 (defn run-test
-  ([func-name id {:keys [dry-run python-func-name supports-logging?]
-                  :or {python-func-name (name func-name)}}]
+  ([func-name id {:keys [dry-run supports-logging?]}]
    (let [atest (find-result func-name id)
          func (clojure-function func-name)
          ret-log (atom [])

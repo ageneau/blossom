@@ -1,6 +1,6 @@
 (ns blossom.bench
   (:require [blossom.max-weight-matching :as mwm]
-            [blossom.context :as ctx]
+            [blossom.context]
             [blossom.dual :as dual]
             [criterium.core :as crit]
             [taoensso.tufte :as tufte :refer (defnp profiled profile)]
@@ -21,7 +21,7 @@
 
 (defn test-graph [n]
   (let [edges (complete-graph n)
-        {:keys [time value]} (elapsed-time (doall (mwm/max-weight-matching  edges {:max-cardinality true})))]
+        {:keys [time]} (elapsed-time (doall (mwm/max-weight-matching  edges {:max-cardinality true})))]
     (println (format "%5d %f" n (/ time 1000)))))
 
 (defn test-lg1 []

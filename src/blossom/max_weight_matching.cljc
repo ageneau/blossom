@@ -10,8 +10,7 @@
             [blossom.options :as options]
             [blossom.queue :as queue]
             [blossom.primal-dual :as pdual]
-            [blossom.utils :as utils]
-            [clojure.spec.alpha :as s]))
+            [blossom.utils :as utils]))
 
 (defprotocol PMaxWeightMatchingImpl
   (blossom-loop-direction [ctx b entry-child])
@@ -294,7 +293,7 @@
     ;; obtained its label initially.
     (let [_ (assert (label/some-endp? ctx b))
           entry-child (entry-child ctx b)
-          [_ jstep endptrick] (blossom-loop-direction ctx b entry-child)
+          [_ jstep _] (blossom-loop-direction ctx b entry-child)
           j jstep]
       (loop [j j
              ctx ctx]
@@ -582,7 +581,7 @@
         result
         (let [p (first neighbors)
               k (endp/edge ctx p)
-              {ctx :context augmented :augmented} result
+              {ctx :context} result
               w (endp/vertex ctx p)
               bv (blossom/in-blossom ctx v)
               bw (blossom/in-blossom ctx w)]
@@ -666,7 +665,7 @@
                  s (->> (interleave iblossoms jblossoms)
                         (partition 2)
                         (take-while #(= (first %) (second %)))
-                        (map (fn [[bi bj]]
+                        (map (fn [[bi _]]
                                (* 2 (dual/dual-var ctx bi))))
                         (reduce + s))
 
@@ -722,7 +721,7 @@
                   (pos? (dual/dual-var ctx b))
                   (or (not (odd? (count (blossom/endps ctx b))))
                       (->> (blossom/endps ctx b)
-                           (keep-indexed #(if (odd? %1) %2))
+                           (keep-indexed #(when (odd? %1) %2))
                            (some (fn [p]
                                    (or (not= (mate/mate ctx (endp/vertex ctx p))
                                              (endp/opposite ctx p))
@@ -825,8 +824,7 @@
 
               ;; Loop until we succeed in augmenting the matching.
               [ctx augmented]
-              (loop [augmented false
-                     ctx ctx]
+              (loop [ctx ctx]
 
                 ;; Each iteration of this loop is a "substage".
                 ;; A substage tries to find an augmenting path;
@@ -849,8 +847,7 @@
                       (if optimum
                         [ctx augmented]
                         ;; Take action at the point where minimum delta occurred.
-                        (recur augmented
-                               (act-on-minimum-delta ctx delta-type delta-edge delta-blossom)))))))]
+                        (recur (act-on-minimum-delta ctx delta-type delta-edge delta-blossom)))))))]
 
           (if-not augmented
             ;; Stop when no more augmenting path can be found.
@@ -909,9 +906,9 @@
   .. [1] \"Efficient Algorithms for Finding Maximum Matching in Graphs\",
      Zvi Galil, ACM Computing Surveys, 1986."
   ([edges opts]
-   (let [{ctx :context :keys [result verify]} (max-weight-matching-impl edges opts)]
+   (let [{:keys [result verify]} (max-weight-matching-impl edges opts)]
      (if-not (empty? verify)
-       (throw (ex-info "Invalid optimum" {:problems verify})))
-     result))
+       (throw (ex-info "Invalid optimum" {:problems verify}))
+       result)))
   ([edges]
    (max-weight-matching edges {:max-cardinality false})))

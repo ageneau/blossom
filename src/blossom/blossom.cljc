@@ -1,7 +1,6 @@
 (ns blossom.blossom
   (:require [blossom.constants :as c]
-            [blossom.context :as ctx]
-            [blossom.graph :as graph]
+            [blossom.context]
             [blossom.utils :as utils]))
 
 (defprotocol PBlossom

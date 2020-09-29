@@ -2,8 +2,6 @@
   (:require [blossom.constants :as c]
             [blossom.max-weight-matching :as mwm]
             [blossom.test-utils :as utils]
-            [blossom.graph :as graph]
-            [blossom.endpoint :as endp]
             [camel-snake-kebab.core :as kebab]
             [clojure.set]
             [clojure.walk :as walk]
