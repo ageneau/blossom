@@ -1,9 +1,9 @@
-(defproject ageneau/blossom "0.1.0-SNAPSHOT"
+(defproject ageneau/blossom "0.1.0"
   :description "Edmonds's blossom algorithm for maximum weight matching in undirected graphs"
   :url "https://github.com/ageneau/blossom"
   :license {:name "BSD 3-Clause \"New\" or \"Revised\" License"
             :url "https://opensource.org/licenses/BSD-3-Clause"
-            :year 2019
+            :year 2020
             :key "bsd-3-clause"}
 
   :dependencies [[org.clojure/clojure "1.10.0"]
