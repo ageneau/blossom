@@ -11,7 +11,9 @@
                  [aysylu/loom "1.0.2"]
                  [camel-snake-kebab "0.4.0"]]
 
-  :repositories {"github" "https://maven2.github.com"}
+  :repositories [["github" "https://maven2.github.com"]
+                 ["releases" {:url "https://repo.clojars.org"
+                              :creds :gpg}]]
 
   :profiles {:dev
              {:dependencies [[lein-doo "0.1.11"]
