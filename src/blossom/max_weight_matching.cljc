@@ -868,7 +868,7 @@
 
   Parameters
   ----------
-  `edges` : Edges of an undirected graph. A sequence of tuples (i, j, wt)
+  `edges` : Edges of an undirected graph. A sequence of tuples [i j wt]
   describing an undirected edge between vertex i and vertex j with weight wt.
   There is at most one edge between any two vertices; no vertex has an edge to itself.
     Vertices are identified by consecutive, non-negative integers.
@@ -885,8 +885,8 @@
   Returns
   -------
   matching : collection
-      A maximal matching of the graph. Such that mate[i] == j if vertex i is
-    matched to vertex j, and mate[i] == -1 if vertex i is not matched.
+  A maximal matching of the graph in the form of a collection of unique vertices
+  pairs.
 
   Notes
   -----
@@ -909,6 +909,9 @@
    (let [{:keys [result verify]} (max-weight-matching-impl edges opts)]
      (if-not (empty? verify)
        (throw (ex-info "Invalid optimum" {:problems verify}))
-       result)))
+       (->> result
+            (map-indexed #(when-not (= c/NO-NODE %2) #{%1 %2}))
+            (filter some?)
+            (into (hash-set))))))
   ([edges]
    (max-weight-matching edges {:max-cardinality false})))

@@ -23,17 +23,16 @@ Add the necessary dependencies to your project:
             [blossom.matching :as m]
             [loom.graph :as lg]))
 
-(def g (-> (lg/weighted-graph)
-                (lg/add-edges [1 2 2][1 3 -2][2 3 1]
-                              [2 4 -1][3 4 -6])))
+(def edges [[1 2 2][1 3 -2][2 3 1][2 4 -1][3 4 -6]])
+(def g (-> (lg/weighted-graph) (lg/add-edges* edges)))
 
 ;; Compute a maximum weigted matching
-(def maxw-matching (mwm/max-weight-matching g))
+(def maxw-matching (mwm/max-weight-matching edges))
 ;; => #{#{1 2}}
 
 ;; Compute the maximum-cardinality matching with maximum weight among all
 ;; maximum-cardinality matchings.
-(def maxc-matching (mwm/max-weight-matching g {:max-cardinality true}))
+(def maxc-matching (mwm/max-weight-matching edges {:max-cardinality true}))
 ;; => #{#{4 2} #{1 3}}
 
 ;; Compute a maximal matching (not necessarily max weight)
