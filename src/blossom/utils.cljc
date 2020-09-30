@@ -24,10 +24,6 @@
           "inefficient count operation")
   (nth v (mod i (count v))))
 
-(defn log-add
-  [ret-log id content]
-  (if @ret-log
-    (swap! ret-log (fnil conj []) {:id id :content content})))
 
 (defn filter-and-find-min-for-key
   "Remove nil elements from sequence and find an element for
@@ -41,6 +37,8 @@
   "Apply f to x and call `clojure.core/assert` on the result. Return x.
   Useful as an assertion method within -> threads"
   ([x f]
-   (do (assert (f x)) x))
+   (assert (f x))
+   x)
   ([x f message]
-   (do x (assert (f x) message) x)))
+   (assert (f x) message)
+   x))
