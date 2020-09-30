@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
+
+## [0.1.2] — 2020-09-30
 ### Added
 - Add release task in project.clj
 ### Changed
@@ -26,4 +28,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 [0.1.0]: https://github.com/ageneau/blossom/compare/0.0.0...0.1.0
 [0.1.1]: https://github.com/ageneau/blossom/compare/v0.1.0...v0.1.1
-[Unreleased]: https://github.com/ageneau/blossom/compare/v0.1.1...HEAD
+[0.1.2]: https://github.com/ageneau/blossom/compare/v0.1.1...0.1.2
+[Unreleased]: https://github.com/ageneau/blossom/compare/0.1.2...HEAD
