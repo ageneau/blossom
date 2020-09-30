@@ -116,7 +116,7 @@
          (map (fn [v]
                 (let [edge (dual/best-edge context v)]
                   (when (and (label/unlabeled? context
-                                                  (blossom/in-blossom context v))
+                                               (blossom/in-blossom context v))
                              (graph/some-edge? edge))
                     {:delta-edge edge
                      :delta (dual/slack context edge)}))))
