@@ -10,7 +10,7 @@
             [blossom.options :as options]
             [blossom.queue :as queue]
             [blossom.primal-dual :as pdual]
-            [blossom.utils :as utils]))
+            [ageneau.utils.core :as utils]))
 
 (defprotocol PMaxWeightMatchingImpl
   (blossom-loop-direction [ctx b entry-child])
@@ -104,7 +104,7 @@
           (dual/best-edge-clear w)
           (dual/best-edge-clear b)
           (cond->
-            (= c/S-BLOSSOM t)
+              (= c/S-BLOSSOM t)
             (queue/queue-push (blossom/leaves ctx b))
 
             (= c/T-BLOSSOM t)

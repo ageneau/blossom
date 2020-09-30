@@ -9,11 +9,12 @@
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.773" :scope "provided"]
                  [aysylu/loom "1.0.2"]
-                 [camel-snake-kebab "0.4.1"]]
+                 [camel-snake-kebab "0.4.1"]
+                 [ageneau/ageneau.utils "0.1.0"]]
 
-  :repositories [["github" "https://maven2.github.com"]
-                 ["releases" {:url "https://repo.clojars.org"
-                              :creds :gpg}]]
+  :repositories [["github" "https://maven2.github.com"]]
+
+  :deploy-repositories [["releases" :clojars]]
 
   :profiles {:dev
              {:dependencies [[lein-doo "0.1.11"]
@@ -37,12 +38,17 @@
                             *unchecked-math* :warn-on-boxed
                             *assert* true}}}
 
-  :plugins [[lein-cljsbuild "1.1.5"]]
+  :plugins [[lein-cloverage "1.0.13"]
+            [lein-shell "0.5.0"]
+            [lein-ancient "0.6.15"]
+            [lein-changelog "0.3.2"]
+            [lein-cljsbuild "1.1.5"]]
 
   :doo {:build "test"}
 
   :aliases {"fig"       ["trampoline" "run" "-m" "figwheel.main"]
-            "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]}
+            "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]
+            "update-readme-version" ["shell" "sed" "-i" "s/\\\\[ageneau\\\\/ageneau\\.utils \"[0-9.]*\"\\\\]/[ageneau\\\\/ageneau\\.utils \"${:version}\"]/" "README.md"]}
   
   :cljsbuild
   {:builds [{:id "test"
@@ -61,5 +67,15 @@
                         :optimizations :none
                         :pretty-print  true
                         :source-map true
-                        :target :nodejs}}]})
+                        :target :nodejs}}]}
+
+  :release-tasks [["shell" "git" "diff" "--exit-code"]
+                  ["change" "version" "leiningen.release/bump-version"]
+                  ["change" "version" "leiningen.release/bump-version" "release"]
+                  ["changelog" "release"]
+                  ["update-readme-version"]
+                  ["vcs" "commit"]
+                  ["vcs" "tag"]
+                  ["deploy"]
+                  ["vcs" "push"]])
 

@@ -1,7 +1,8 @@
 (ns blossom.blossom
   (:require [blossom.constants :as c]
             [blossom.context]
-            [blossom.utils :as utils]))
+            [blossom.utils :as u]
+            [ageneau.utils.core :as utils]))
 
 (defprotocol PBlossom
   (set-in-blossom [this v b])
@@ -61,7 +62,7 @@
     (nth (:blossom-childs this) b))
 
   (child [this b n]
-    (utils/wget (childs this b) n))
+    (u/wget (childs this b) n))
 
   (childs-find [this b t]
     (first (utils/positions #{t} (childs this b))))
@@ -94,7 +95,7 @@
     (nth (:blossom-endps this) b))
 
   (endpoint [this b n]
-    (utils/wget (endps this b) n))
+    (u/wget (endps this b) n))
 
   (unused-add [this b]
     (update this :unused-blossoms conj b))

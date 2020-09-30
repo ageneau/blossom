@@ -15,7 +15,6 @@ Add the necessary dependencies to your project:
 
 ## Usage
 
-[//]: # (FIXME: update) 
 
 ```clojure
 (ns test.blossom

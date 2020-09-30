@@ -6,7 +6,7 @@
             [blossom.graph :as graph]
             [blossom.label :as label]
             [blossom.options :as options]
-            [blossom.utils :as utils]))
+            [blossom.utils :as u]))
 
 (defprotocol PPrimalDual
   (compute-delta-1 [context]
@@ -120,7 +120,7 @@
                              (graph/some-edge? edge))
                     {:delta-edge edge
                      :delta (dual/slack context edge)}))))
-         (utils/filter-and-find-min-for-key :delta)))
+         (u/filter-and-find-min-for-key :delta)))
 
   (compute-delta-3
     [context]
@@ -133,7 +133,7 @@
                              (graph/some-edge? best-edge-b))
                     {:delta-edge best-edge-b
                      :delta (/ (dual/slack context best-edge-b) 2)}))))
-         (utils/filter-and-find-min-for-key :delta)))
+         (u/filter-and-find-min-for-key :delta)))
 
   (compute-delta-4
     [context]
@@ -147,7 +147,7 @@
                              (label/t-blossom? context b))
                     {:delta dual-var-b
                      :delta-blossom b}))))
-         (utils/filter-and-find-min-for-key :delta)))
+         (u/filter-and-find-min-for-key :delta)))
 
   (update-best-edges [context b]
     (let [context (reduce (fn [context bv]
