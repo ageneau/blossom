@@ -48,7 +48,7 @@
 
   :aliases {"fig"       ["trampoline" "run" "-m" "figwheel.main"]
             "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]
-            "update-readme-version" ["shell" "sed" "-i" "s/\\\\[ageneau\\\\/ageneau\\.utils \"[0-9.]*\"\\\\]/[ageneau\\\\/ageneau\\.utils \"${:version}\"]/" "README.md"]}
+            "update-readme-version" ["shell" "sed" "-i" "s/\\\\[ageneau\\\\/blossom \"[0-9.]*\"\\\\]/[ageneau\\\\/blossom \"${:version}\"]/" "README.md"]}
   
   :cljsbuild
   {:builds [{:id "test"

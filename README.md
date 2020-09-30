@@ -9,7 +9,7 @@ It was ported from the python code authored by Joris van Rantwijk included in th
 Add the necessary dependencies to your project:
 
 ```clojure
-[ageneau/blossom "0.1.1"]
+[ageneau/blossom "0.1.2"]
 [aysylu/loom "1.0.2"]
 ```
 
