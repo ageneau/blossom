@@ -1,4 +1,4 @@
-(defproject ageneau/blossom "0.1.0"
+(defproject ageneau/blossom "0.1.1"
   :description "Edmonds's blossom algorithm for maximum weight matching in undirected graphs"
   :url "https://github.com/ageneau/blossom"
   :license {:name "BSD 3-Clause \"New\" or \"Revised\" License"

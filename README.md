@@ -9,7 +9,7 @@ It was ported from the python code authored by Joris van Rantwijk included in th
 Add the necessary dependencies to your project:
 
 ```clojure
-[ageneau/blossom "0.1.0"]
+[ageneau/blossom "0.1.1"]
 [aysylu/loom "1.0.2"]
 ```
 
@@ -22,7 +22,7 @@ Add the necessary dependencies to your project:
   (:require [blossom.max-weight-matching :as mwm]
             [blossom.matching :as m]
             [loom.graph :as lg]))
-
+ 
 (def edges [[1 2 2][1 3 -2][2 3 1][2 4 -1][3 4 -6]])
 (def g (-> (lg/weighted-graph) (lg/add-edges* edges)))
 
