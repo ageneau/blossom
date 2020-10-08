@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
+### Added
+- Add github workflow for unit tests
+### Changed
+- Remove Clojurescript dependency in project.clj
+### Fixed
+- fix update-readme-version
 
 ## [0.1.2] — 2020-09-30
 ### Added

@@ -7,23 +7,23 @@
             :key "bsd-3-clause"}
 
   :dependencies [[org.clojure/clojure "1.10.1"]
-                 [org.clojure/clojurescript "1.10.773" :scope "provided"]
                  [aysylu/loom "1.0.2"]
                  [camel-snake-kebab "0.4.1"]
-                 [ageneau/ageneau.utils "0.1.0"]]
+                 [ageneau/ageneau.utils "0.1.1"]]
 
   :repositories [["github" "https://maven2.github.com"]]
 
   :deploy-repositories [["releases" :clojars]]
 
+
   :profiles {:dev
-             {:dependencies [[lein-doo "0.1.11"]
+             {:dependencies [[org.clojure/clojurescript "1.10.773" :scope "provided"]
                              [com.bhauman/figwheel-main "0.2.11"]
                              [com.bhauman/rebel-readline-cljs "0.1.4"]
                              [com.taoensso/tufte "2.2.0"]
                              [criterium "0.4.6"]
                              [org.clojure/math.combinatorics "0.1.6"]]
-              :plugins      [[lein-doo "0.1.11"]]
+
               :global-vars {;; *warn-on-reflection* true
                             ;; *unchecked-math* :warn-on-boxed
                             *assert* true}
@@ -38,7 +38,8 @@
                             *unchecked-math* :warn-on-boxed
                             *assert* true}}}
 
-  :plugins [[lein-cloverage "1.0.13"]
+  :plugins [[lein-doo "0.1.11"]
+            [lein-cloverage "1.0.13"]
             [lein-shell "0.5.0"]
             [lein-ancient "0.6.15"]
             [lein-changelog "0.3.2"]
@@ -69,13 +70,14 @@
                         :source-map true
                         :target :nodejs}}]}
 
-  :release-tasks [["shell" "git" "diff" "--exit-code"]
-                  ["change" "version" "leiningen.release/bump-version"]
+  :release-tasks [["vcs" "assert-committed"]
                   ["change" "version" "leiningen.release/bump-version" "release"]
                   ["changelog" "release"]
                   ["update-readme-version"]
                   ["vcs" "commit"]
                   ["vcs" "tag"]
                   ["deploy"]
+                  ["change" "version" "leiningen.release/bump-version"]
+                  ["vcs" "commit"]
                   ["vcs" "push"]])
 
