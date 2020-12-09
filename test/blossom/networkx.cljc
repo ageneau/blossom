@@ -45,13 +45,13 @@
   (into (sorted-map)
         (keep-indexed (fn [idx item]
                         {:pre [(s/valid? (s/nilable (s/coll-of int?)) item)]}
-                        (when item [idx (vec (map adapt-edge-index item))]))
+                        (when item [idx (mapv adapt-edge-index item)]))
                       in)))
 
 (defn adapt-context [in]
-  (let [in (walk/keywordize-keys in)
-        edges (get in :edges)
-        options {:sort-vertices true
+  (let [in      (walk/keywordize-keys in)
+        edges   (get in :edges)
+        options {:sort-vertices   true
                  :max-cardinality (get in :max-cardinality)}
         context (mwm/initialize-context edges options)]
     (assert (= (:nedge context) (get in :nedge)))
@@ -62,20 +62,20 @@
         (merge (select-keys in
                             (clojure.set/intersection (set (keys context))
                                                       (set (keys in)))))
-        (update :endpoint (comp vec (partial map adapt-vertex)))
-        (update :neighbend (comp vec (partial map (comp vec (partial map adapt-endpoint)))))
-        (update :mate (comp vec (partial map adapt-endpoint)))
-        (update :label (comp vec (partial map adapt-label)))
-        (update :label-end (comp vec (partial map adapt-endpoint)))
-        (update :in-blossom (comp vec (partial map adapt-blossom)))
-        (update :blossom-parent (comp vec (partial map adapt-blossom)))
-        (update :blossom-childs (comp vec (partial map (comp vec (partial map adapt-vertex)))))
-        (update :blossom-base (comp vec (partial map adapt-blossom)))
-        (update :blossom-endps (comp vec (partial map (comp vec (partial map adapt-endpoint)))))
-        (update :best-edge (comp vec (partial map adapt-edge-index)))
+        (update :endpoint (partial mapv adapt-vertex))
+        (update :neighbend (partial mapv (comp vec (partial map adapt-endpoint))))
+        (update :mate (partial mapv adapt-endpoint))
+        (update :label (partial mapv adapt-label))
+        (update :label-end (partial mapv adapt-endpoint))
+        (update :in-blossom (partial mapv adapt-blossom))
+        (update :blossom-parent (partial mapv adapt-blossom))
+        (update :blossom-childs (partial mapv (comp vec (partial map adapt-vertex))))
+        (update :blossom-base (partial mapv adapt-blossom))
+        (update :blossom-endps (partial mapv (comp vec (partial map adapt-endpoint))))
+        (update :best-edge (partial mapv adapt-edge-index))
         (update :blossom-best-edges adapt-blossom-best-edges)
-        (update :unused-blossoms (comp vec (partial map adapt-blossom)))
-        (update :queue (comp vec (partial map adapt-vertex))))))
+        (update :unused-blossoms (partial mapv adapt-blossom))
+        (update :queue (partial mapv adapt-vertex)))))
 
 (defmulti adapt-arg-list-for-func (fn [args context-pre fname] fname))
 
@@ -176,22 +176,21 @@
 (defn adapt-verify-optimum-result [in]
   (->> in
        (map walk/keywordize-keys)
-       (map #(reduce-kv (fn [problem k v]
-                          (cond-> (assoc problem k v)
-                            (#{:type} k)
-                            (update k keyword)
+       (mapv #(reduce-kv (fn [problem k v]
+                           (cond-> (assoc problem k v)
+                             (#{:type} k)
+                             (update k keyword)
 
-                            (#{:mate-v :mate :matei :matej} k)
-                            (update k adapt-endpoint)
+                             (#{:mate-v :mate :matei :matej} k)
+                             (update k adapt-endpoint)
 
-                            (#{:k} k)
-                            (update k adapt-edge-index)
+                             (#{:k} k)
+                             (update k adapt-edge-index)
 
-                            (#{:v} k)
-                            (update k adapt-vertex)))
-                        {}
-                        %))
-       vec))
+                             (#{:v} k)
+                             (update k adapt-vertex)))
+                         {}
+                         %))))
 
 (defmethod adapt-ret-for-func :verify-optimum
   [ret context-post fname-kw]
