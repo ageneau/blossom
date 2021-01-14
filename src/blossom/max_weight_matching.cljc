@@ -753,7 +753,7 @@
 
   (mate-endps-to-vertices
     [ctx]
-    {:post [(valid-matching? ctx %)]}
+    {:post [#(valid-matching? ctx %)]}
     (->> (blossom/vertex-range ctx)
          (mapv #(let [mate-v (mate/mate ctx %)]
                   (if (endp/some-endp? mate-v)
