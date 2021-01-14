@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
+
+## [0.1.4] — 2021-01-14
 ### Changed
 - Updated github worflow
 - Code cleanups
@@ -43,4 +45,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [0.1.1]: https://github.com/ageneau/blossom/compare/v0.1.0...v0.1.1
 [0.1.2]: https://github.com/ageneau/blossom/compare/v0.1.1...0.1.2
 [0.1.3]: https://github.com/ageneau/blossom/compare/0.1.2...0.1.3
-[Unreleased]: https://github.com/ageneau/blossom/compare/0.1.3...HEAD
+[0.1.4]: https://github.com/ageneau/blossom/compare/0.1.3...0.1.4
+[Unreleased]: https://github.com/ageneau/blossom/compare/0.1.4...HEAD
