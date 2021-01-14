@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
+### Changed
+- Updated github worflow
+- Code cleanups
+### Fixed
+- [#1](https://github.com/ageneau/blossom/pull/1) Fix wrong form in post condition (Andrew Hayward).
 
 ## [0.1.3] — 2020-10-08
 ### Added
